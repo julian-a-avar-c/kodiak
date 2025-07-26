@@ -19,9 +19,12 @@ def ast(inputFile: os.Path) = Zone {
   val content = os.read(inputFile)
 
   val parsedContent = parser(content) match
-    case Success(value, index) => value
-    case _: Failure            => "ERROR"
+    case Success(value, index) =>
+      "" // value
+    case f @ Failure(failureString, index, extra) =>
+      val trace = f.trace(enableLogging = true)
+      printf(c"%s\n", trace.longAggregateMsg.unsafeToCString)
+      "ERROR"
 
   printf(c"%s\n", parsedContent.unsafeToCString)
-  // for line <- content.linesIterator do printf(c"%s\n", line.toUnsafeCString)
 }

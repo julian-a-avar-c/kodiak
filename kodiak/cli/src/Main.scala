@@ -25,6 +25,7 @@ object Main:
             case input: os.SubPath => os.pwd / input
           }
         }
+        .filter(os.exists)
         .map(kodiak.cli.ast)
   }
 

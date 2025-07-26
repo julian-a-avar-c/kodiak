@@ -1,18 +1,45 @@
 package kodiak.parser
 
-import fastparse.*
-import fastparse.NoWhitespace.*
+import scala.annotation.{tailrec, switch}
 
-def apply(content: String): Parsed[String] =
+import fastparse.*
+import fastparse.internal.{Msgs, Util}
+
+import KodiakWhitespace.*
+
+def apply(content: String): Parsed[Unit] =
   fastparse.parse(content, file(using _))
 
-def file[$: P]: P[String] = P {
-  """{?} This is a one-line comment.
+case class File(content: String)
 
-{?
-  This is a multi-line comment.
-?}
+def file[$: P]: P[Unit] = P {
+  Start ~ End
+}
 
-printline("[Hello, World!])
-""".!
+sealed trait Expr
+
+def expr[$: P]: P[Expr] = P { call | literal | expr }
+
+case class Call(name: Id, args: Id) extends Expr
+
+def call[$: P]: P[Call] = P {
+  (id ~ "(" ~ id ~ ")").map(Call(_, _))
+}
+
+sealed trait Literal extends Expr
+
+def literal[$: P]: P[Literal] = P {
+  integer
+}
+
+case class IntegerLiteral(value: Int) extends Literal
+
+def integer[$: P]: P[IntegerLiteral] = P {
+  CharIn("0-9").rep(1).!.map(i => IntegerLiteral(i.toInt))
+}
+
+case class Id(name: String) extends Expr
+
+def id[$: P]: P[Id] = P {
+  CharIn("[a-z0-9_-]").rep(1).!.map(Id(_))
 }
