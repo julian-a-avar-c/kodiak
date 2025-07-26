@@ -4,6 +4,14 @@ package build
 import mill.*
 import mill.scalalib.*
 import mill.scalanativelib.*
+import mill.api.Task.Simple
+
+object Deps:
+  def `os-lib`    = mvn"com.lihaoyi::os-lib::0.11.4"
+  def `fastparse` = mvn"com.lihaoyi::fastparse::3.1.1"
+  def `mainargs`  = mvn"com.lihaoyi::mainargs::0.7.6"
+  object Version:
+    val `scalatest` = "3.2.19"
 
 trait KodiakModule extends ScalaNativeModule:
   def scalaVersion       = "3.7.1"
@@ -12,16 +20,29 @@ trait KodiakModule extends ScalaNativeModule:
 
 object kodiak extends KodiakModule:
   def mvnDeps = Seq(
-    mvn"com.lihaoyi::os-lib::0.11.4",
-    mvn"com.lihaoyi::fastparse::3.1.1",
-    mvn"com.lihaoyi::mainargs::0.7.6"
+    Deps.`os-lib`
   )
+
   object cli extends KodiakModule:
-    def moduleDeps = Seq(kodiak)
+    def moduleDeps = Seq(kodiak, parser)
     def mvnDeps    = Seq(
-      mvn"com.lihaoyi::os-lib::0.11.4",
-      mvn"com.lihaoyi::fastparse::3.1.1",
-      mvn"com.lihaoyi::mainargs::0.7.6"
+      Deps.`os-lib`,
+      Deps.`fastparse`,
+      Deps.`mainargs`
     )
   end cli
+
+  object parser extends KodiakModule:
+    def moduleDeps = Seq(kodiak)
+    def mvnDeps    = Seq(
+      Deps.`fastparse`
+    )
+    object test extends ScalaNativeTests, TestModule.ScalaTest:
+      def moduleDeps = Seq(kodiak)
+      def mvnDeps    = Seq(
+        Deps.`fastparse`
+      )
+      def scalaTestVersion = Deps.Version.scalatest
+    end test
+  end parser
 end kodiak

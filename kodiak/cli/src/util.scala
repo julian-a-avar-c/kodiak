@@ -27,7 +27,7 @@ inline def rawMode(callback: () => Unit)(using zone: Zone) = {
   // Save original terminal settings
   val (original, raw) = (
     alloc[termios](),
-    alloc[termios]()
+    alloc[termios](),
   )
 
   tcgetattr(STDIN_FILENO, original);

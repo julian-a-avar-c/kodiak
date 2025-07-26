@@ -5,13 +5,12 @@ import scala.scalanative.libc.stdio.{printf}
 import kodiak.cli.util.{unsafeToCString}
 
 import kodiak.parser
-import fastparse.Parsed.Success
-import fastparse.Parsed.Failure
+import fastparse.Parsed.{Success, Failure}
 
 def ast(inputFile: os.Path) = Zone {
   printf(
     c"Welcome to Kodiak %s AST Parser!\n",
-    kodiak.version.unsafeToCString
+    kodiak.version.unsafeToCString,
   )
   printf(c"Parsing %s.\n", inputFile.toString.unsafeToCString)
   printf(c"\n")

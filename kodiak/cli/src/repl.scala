@@ -8,7 +8,7 @@ import kodiak.cli.util.*
 def repl() = Zone {
   printf(
     c"Welcome to Kodiak %s REPL!\n",
-    kodiak.version.unsafeToCString
+    kodiak.version.unsafeToCString,
   )
   printf(c"Type in expressions for evaluation. Or try help.\n")
   printf(c"\n")

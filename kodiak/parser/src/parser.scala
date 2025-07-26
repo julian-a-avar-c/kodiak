@@ -1,11 +1,8 @@
 package kodiak.parser
 
-import scala.annotation.{tailrec, switch}
-
 import fastparse.*
-import fastparse.internal.{Msgs, Util}
 
-import KodiakWhitespace.*
+import kodiak.parser.KodiakWhitespace.*
 
 def apply(content: String): Parsed[Unit] =
   fastparse.parse(content, file(using _))

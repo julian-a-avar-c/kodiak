@@ -13,7 +13,7 @@ object Main:
       @arg(positional = true)
       input: Option[String],
       @arg(short = 'i')
-      interactive: Option[Boolean]
+      interactive: Option[Boolean],
   ) = {
     if interactive.contains(true) then {}
     else

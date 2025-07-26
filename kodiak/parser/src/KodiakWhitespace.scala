@@ -38,7 +38,7 @@ given KodiakWhitespace: Whitespace:
     @tailrec def rec(
         index: Int,
         states: Seq[State],
-        nesting: Int
+        nesting: Int,
     ): ParsingRun[Unit] =
       if !input.isReachable(index)
       then unreachable(ctx)(index, states.last, nesting)
@@ -54,7 +54,7 @@ given KodiakWhitespace: Whitespace:
                 rec(
                   index + 1,
                   states :+ State.ToplevelCommentMaybeStart,
-                  nesting
+                  nesting,
                 )
               case _ => exitAndReport(ctx)(index)
             }
@@ -65,7 +65,7 @@ given KodiakWhitespace: Whitespace:
                 rec(
                   index + 1,
                   states :+ State.ToplevelCommentStart,
-                  nesting
+                  nesting,
                 )
               case _ => exitAndReport(ctx)(index)
             }
@@ -76,13 +76,13 @@ given KodiakWhitespace: Whitespace:
                 rec(
                   index + 1,
                   states :+ State.ToplevelSinglelineComment,
-                  nesting
+                  nesting,
                 )
               case _ =>
                 rec(
                   index,
                   states :+ State.ToplevelMultilineComment,
-                  nesting
+                  nesting,
                 )
             }
           }
@@ -92,13 +92,13 @@ given KodiakWhitespace: Whitespace:
                 rec(
                   index + 1,
                   states :+ State.ToplevelWhitespace,
-                  nesting - 1
+                  nesting - 1,
                 )
               case _ =>
                 rec(
                   index + 1,
                   states,
-                  nesting
+                  nesting,
                 )
             }
           }
@@ -108,19 +108,19 @@ given KodiakWhitespace: Whitespace:
                 rec(
                   index + 1,
                   states :+ State.ToplevelMaybeMultilineCommentEnd,
-                  nesting
+                  nesting,
                 )
               case '{' =>
                 rec(
                   index + 1,
                   states :+ State.NestedMaybeMultilineCommentStart,
-                  nesting
+                  nesting,
                 )
               case _ =>
                 rec(
                   index + 1,
                   states,
-                  nesting
+                  nesting,
                 )
             }
           }
@@ -130,13 +130,13 @@ given KodiakWhitespace: Whitespace:
                 rec(
                   index + 1,
                   states :+ State.ToplevelWhitespace,
-                  nesting - 1
+                  nesting - 1,
                 )
               case _ =>
                 rec(
                   index,
                   states :+ State.ToplevelMultilineComment,
-                  nesting
+                  nesting,
                 )
             end match
           }
@@ -151,7 +151,7 @@ given KodiakWhitespace: Whitespace:
   end apply
 
   def unreachable(
-      ctx: ParsingRun[?]
+      ctx: ParsingRun[?],
   )(index: Int, state: State, nesting: Int): ParsingRun[Unit] = {
     (state = state, nesting = nesting) match
       case (state = State.ToplevelWhitespace, nesting = _) |
