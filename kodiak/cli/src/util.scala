@@ -21,9 +21,10 @@ extension [T](array: Array[T])
 @extern
 object glibc_termios {
   def cfmakeraw(size: Ptr[termios]): Ptr[Byte] = extern
+  def sandbox(): Unit                          = extern
 }
 
-inline def rawMode(callback: () => Unit)(using zone: Zone) = {
+inline def rawMode(callback: => Unit)(using zone: Zone) = {
   // Save original terminal settings
   val (original, raw) = (
     alloc[termios](),
@@ -37,7 +38,7 @@ inline def rawMode(callback: () => Unit)(using zone: Zone) = {
   tcsetattr(STDIN_FILENO, TCSANOW, raw);
 
   // Call the callback function
-  callback()
+  callback
 
   // Restore original settings
   tcsetattr(STDIN_FILENO, TCSANOW, original);

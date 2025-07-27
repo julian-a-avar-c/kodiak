@@ -1,9 +1,8 @@
 package kodiak.parser
 
+import scala.annotation.{tailrec, switch}
 import fastparse.{Whitespace, ParsingRun}
-import scala.annotation.tailrec
 import fastparse.internal.{Msgs, Util}
-import scala.annotation.switch
 
 /** Check for verbose failures and report
   *
@@ -28,9 +27,9 @@ given KodiakWhitespace: Whitespace:
     val ToplevelCommentStart: Int             = 102
     val ToplevelSinglelineComment: Int        = 103
     val ToplevelMultilineComment: Int         = 104
-    val ToplevelMaybeMultilineCommentEnd: Int = 105
+    val ToplevelMultilineCommentMaybeEnd: Int = 105
 
-    val NestedMaybeMultilineCommentStart: Int = 201
+    val NestedMultilineCommentMaybeStart: Int = 200
   end State
 
   def apply(ctx: ParsingRun[?]) =
@@ -107,13 +106,13 @@ given KodiakWhitespace: Whitespace:
               case '?' =>
                 rec(
                   index + 1,
-                  states :+ State.ToplevelMaybeMultilineCommentEnd,
+                  states :+ State.ToplevelMultilineCommentMaybeEnd,
                   nesting,
                 )
               case '{' =>
                 rec(
                   index + 1,
-                  states :+ State.NestedMaybeMultilineCommentStart,
+                  states :+ State.NestedMultilineCommentMaybeStart,
                   nesting,
                 )
               case _ =>
@@ -124,7 +123,7 @@ given KodiakWhitespace: Whitespace:
                 )
             }
           }
-          case State.ToplevelMaybeMultilineCommentEnd => {
+          case State.ToplevelMultilineCommentMaybeEnd => {
             (currentChar) match
               case '}' =>
                 rec(
@@ -140,7 +139,7 @@ given KodiakWhitespace: Whitespace:
                 )
             end match
           }
-          case State.NestedMaybeMultilineCommentStart => {
+          case State.NestedMultilineCommentMaybeStart => {
             ???
           }
         }
@@ -153,21 +152,18 @@ given KodiakWhitespace: Whitespace:
   def unreachable(
       ctx: ParsingRun[?],
   )(index: Int, state: State, nesting: Int): ParsingRun[Unit] = {
-    (state = state, nesting = nesting) match
-      case (state = State.ToplevelWhitespace, nesting = _) |
-          (state = State.ToplevelCommentMaybeStart, nesting = _) => {
-        exitAndReport(ctx)(index)
-      }
-      // case (state = State.ToplevelMultilineComment, nesting = 0) => {
-      //   exitAndReport(ctx)(index - 1)
-      // }
-      case _ => {
-        ctx.cut = true
-        val res = ctx.freshFailure(index)
-        if ctx.verboseFailures then
-          ctx.reportTerminalMsg(index, () => Util.literalize("?}"))
-        res
-      }
-    end match
+    if state == State.ToplevelWhitespace || state == State.ToplevelCommentMaybeStart || state == State.ToplevelSinglelineComment
+    then exitAndReport(ctx)(index)
+    // if state == State.ToplevelWhitespace || state == State.ToplevelCommentMaybeStart
+    // then exitAndReport(ctx)(index)
+    // else if state == State.ToplevelCommentMaybeStart && nesting == 0
+    // then exitAndReport(ctx)(index - 1)
+    else
+      ctx.cut = true
+      val res = ctx.freshFailure(index)
+      if ctx.verboseFailures then
+        ctx.reportTerminalMsg(index, () => Util.literalize("?}"))
+      res
+    end if
   }
 end KodiakWhitespace

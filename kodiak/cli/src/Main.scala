@@ -3,8 +3,13 @@ package kodiak.cli
 import mainargs.{main, arg, ParserForMethods}
 
 import kodiak.cli.util.unsafeWrapArray
+import kodiak.cli.util.rawMode
+import scala.scalanative.unsafe.Zone
 
 object Main:
+  @main()
+  def sandbox() = Zone { rawMode { kodiak.cli.util.glibc_termios.sandbox() } }
+
   @main()
   def repl() = kodiak.cli.repl()
 

@@ -3,40 +3,42 @@ package kodiak.parser
 import fastparse.*
 
 import kodiak.parser.KodiakWhitespace.*
+import kodiak.ast.{Ast, Document, Stmts, Expr, Literal, Integer, Boolean}
 
-def apply(content: String): Parsed[Unit] =
-  fastparse.parse(content, file(using _))
+def parse[T >: Document](
+    input: String,
+): Parsed[T] = parse(input, document)
 
-case class File(content: String)
+def parse[T](
+    input: String,
+    parser: ParsingRun[Any] ?=> ParsingRun[T],
+): Parsed[T] =
+  fastparse.parse(input, parser(using _))
 
-def file[$: P]: P[Unit] = P {
-  Start ~ End
+// ----------------------------------------------------------------------------
+
+def document[$: P]: P[Document] = P {
+  (Start ~ stmts ~ End).map(stmts => Document(stmts))
 }
 
-sealed trait Expr
-
-def expr[$: P]: P[Expr] = P { call | literal | expr }
-
-case class Call(name: Id, args: Id) extends Expr
-
-def call[$: P]: P[Call] = P {
-  (id ~ "(" ~ id ~ ")").map(Call(_, _))
+def stmts[$: P]: P[Stmts] = P {
+  expr.rep(min = 1)
 }
 
-sealed trait Literal extends Expr
+// ----------------------------------------------------------------------------
+
+def expr[$: P]: P[Expr] = P {
+  literal
+}
 
 def literal[$: P]: P[Literal] = P {
-  integer
+  integer | boolean
 }
 
-case class IntegerLiteral(value: Int) extends Literal
-
-def integer[$: P]: P[IntegerLiteral] = P {
-  CharIn("0-9").rep(1).!.map(i => IntegerLiteral(i.toInt))
+def integer[$: P]: P[Integer] = P {
+  CharIn("0-9").rep(min = 1).!.map(n => Integer(n.toInt))
 }
 
-case class Id(name: String) extends Expr
-
-def id[$: P]: P[Id] = P {
-  CharIn("[a-z0-9_-]").rep(1).!.map(Id(_))
+def boolean[$: P]: P[Boolean] = P {
+  ("true" | "false").!.map(b => Boolean(b == "true"))
 }

@@ -4,7 +4,6 @@ import scala.scalanative.unsafe.{Zone, CQuote}
 import scala.scalanative.libc.stdio.{printf}
 import kodiak.cli.util.{unsafeToCString}
 
-import kodiak.parser
 import fastparse.Parsed.{Success, Failure}
 
 def ast(inputFile: os.Path) = Zone {
@@ -17,13 +16,13 @@ def ast(inputFile: os.Path) = Zone {
 
   val content = os.read(inputFile)
 
-  val parsedContent = parser(content) match
-    case Success(value, index) =>
-      "" // value
-    case f @ Failure(failureString, index, extra) =>
-      val trace = f.trace(enableLogging = true)
-      printf(c"%s\n", trace.longAggregateMsg.unsafeToCString)
-      "ERROR"
+  // val parsedContent = parse(content, document) match
+  //   case Success(value, index) =>
+  //     "" // value
+  //   case f @ Failure(failureString, index, extra) =>
+  //     val trace = f.trace(enableLogging = true)
+  //     printf(c"%s\n", trace.longAggregateMsg.unsafeToCString)
+  //     "ERROR"
 
-  printf(c"%s\n", parsedContent.unsafeToCString)
+  // printf(c"%s\n", parsedContent.unsafeToCString)
 }
