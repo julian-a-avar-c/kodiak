@@ -32,6 +32,7 @@ object Stmt:
   case class Val(name: Literal.Id, value: Expr) extends Definition
   case class Var(name: Literal.Id, value: Expr) extends Definition
   case class Set(name: Literal.Id, value: Expr) extends Definition
+end Stmt
 
 // ----------------------------------------------------------------------------
 
@@ -62,10 +63,12 @@ object Match:
   sealed trait Clause                                 extends Ast
   case class PatternClause(pattern: Expr, body: Expr) extends Clause
   case class ElseClause(body: Expr)                   extends Clause
+end Match
 
-case class While(condition: Expr, body: Expr)               extends Control
+case class While(condition: Expr, body: Expr)              extends Control
 case class For(generators: Seq[For.Generator], body: Expr) extends Control
 object For:
   sealed trait Generator                                     extends Ast
   case class ExtractorGenerator(id: Literal.Id, value: Expr) extends Generator
   case class ExpressionGenerator(expr: Expr)                 extends Generator
+end For

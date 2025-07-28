@@ -90,4 +90,32 @@ class LiteralSpec extends ParserSpec:
     assertParse(input, expected, document)
   }
 
+  it should "parse a sequence" in {
+    val input    = "[1, 2, 3]"
+    val expected = Document(
+      Sequence(Integer(1), Integer(2), Integer(3)),
+    )
+
+    assertParse(input, expected, document)
+  }
+
+  it should "parse a set" in {
+    val input    = "{1, 2, 3}"
+    val expected = Document(
+      Set(Integer(1), Integer(2), Integer(3)),
+    )
+
+    // assertParse(input, expected, document)
+    import fastparse.Parsed.{Success, Failure}
+    parse(input, document) match
+      case Success(actual, index) =>
+        assert(
+          actual == expected,
+          s"Expected $expected but got $actual at $index",
+        )
+      case Failure(msg, index, extra) =>
+        fail(s"${extra.trace(enableLogging = true).longAggregateMsg}")
+    end match
+  }
+
 end LiteralSpec

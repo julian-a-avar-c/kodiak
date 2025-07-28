@@ -10,10 +10,9 @@ import fastparse.internal.{Msgs, Util}
   * @param current
   * @return
   */
-inline def exitAndReport(ctx: ParsingRun[?])(index: Int) = {
+inline def exitAndReport(ctx: ParsingRun[?])(index: Int) =
   if ctx.verboseFailures then ctx.reportTerminalMsg(index, Msgs.empty)
   ctx.freshSuccessUnit(index)
-}
 
 /** Whitespace syntax that supports {?} line-comments and {? ?}
   * multiline-comments, *including nesting* of {? ?} comments, as is the case in
@@ -44,9 +43,9 @@ given KodiakWhitespace: Whitespace:
       else
         val currentChar = input(index)
 
-        states.last match {
-          case State.ToplevelWhitespace => {
-            (currentChar) match {
+        states.last match
+          case State.ToplevelWhitespace =>
+            (currentChar) match
               case ' ' | '\t' | '\r' | '\n' =>
                 rec(index + 1, states, nesting = 0)
               case '{' =>
@@ -56,10 +55,8 @@ given KodiakWhitespace: Whitespace:
                   nesting,
                 )
               case _ => exitAndReport(ctx)(index)
-            }
-          }
-          case State.ToplevelCommentMaybeStart => {
-            (currentChar) match {
+          case State.ToplevelCommentMaybeStart =>
+            (currentChar) match
               case '?' =>
                 rec(
                   index + 1,
@@ -67,10 +64,8 @@ given KodiakWhitespace: Whitespace:
                   nesting,
                 )
               case _ => exitAndReport(ctx)(index)
-            }
-          }
-          case State.ToplevelCommentStart => {
-            (currentChar) match {
+          case State.ToplevelCommentStart =>
+            (currentChar) match
               case '}' =>
                 rec(
                   index + 1,
@@ -83,10 +78,8 @@ given KodiakWhitespace: Whitespace:
                   states :+ State.ToplevelMultilineComment,
                   nesting,
                 )
-            }
-          }
-          case State.ToplevelSinglelineComment => {
-            (currentChar) match {
+          case State.ToplevelSinglelineComment =>
+            (currentChar) match
               case '\n' =>
                 rec(
                   index + 1,
@@ -99,10 +92,8 @@ given KodiakWhitespace: Whitespace:
                   states,
                   nesting,
                 )
-            }
-          }
-          case State.ToplevelMultilineComment => {
-            (currentChar) match {
+          case State.ToplevelMultilineComment =>
+            (currentChar) match
               case '?' =>
                 rec(
                   index + 1,
@@ -121,9 +112,7 @@ given KodiakWhitespace: Whitespace:
                   states,
                   nesting,
                 )
-            }
-          }
-          case State.ToplevelMultilineCommentMaybeEnd => {
+          case State.ToplevelMultilineCommentMaybeEnd =>
             (currentChar) match
               case '}' =>
                 rec(
@@ -138,11 +127,9 @@ given KodiakWhitespace: Whitespace:
                   nesting,
                 )
             end match
-          }
-          case State.NestedMultilineCommentMaybeStart => {
+          case State.NestedMultilineCommentMaybeStart =>
             ???
-          }
-        }
+        end match
       end if
     end rec
 
@@ -151,7 +138,7 @@ given KodiakWhitespace: Whitespace:
 
   def unreachable(
       ctx: ParsingRun[?],
-  )(index: Int, state: State, nesting: Int): ParsingRun[Unit] = {
+  )(index: Int, state: State, nesting: Int): ParsingRun[Unit] =
     if state == State.ToplevelWhitespace || state == State.ToplevelCommentMaybeStart || state == State.ToplevelSinglelineComment
     then exitAndReport(ctx)(index)
     // if state == State.ToplevelWhitespace || state == State.ToplevelCommentMaybeStart
@@ -165,5 +152,5 @@ given KodiakWhitespace: Whitespace:
         ctx.reportTerminalMsg(index, () => Util.literalize("?}"))
       res
     end if
-  }
+  end unreachable
 end KodiakWhitespace
