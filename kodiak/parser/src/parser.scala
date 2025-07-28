@@ -24,39 +24,39 @@ end WORD_ID
 
 def NUMBER[$: P]: P[String]         = P { CharIn("0-9").! }
 def NUMBER_SEP[$: P]: P[scala.Unit] = P { "_" }
-def NUMBER_SEQ[$: P]: P[String]     = P {
+def NUMBER_SEQ[$: P]: P[String]     = P:
   NUMBER.repX(min = 1, sep = NUMBER_SEP.?).!
-}
+end NUMBER_SEQ
 
-def NUMBER_SIGN[$: P]: P[-1 | 1] = P {
+def NUMBER_SIGN[$: P]: P[-1 | 1] = P:
   ("+" | "-").!.map {
     case "+" => 1
     case "-" => -1
   }
-}
+end NUMBER_SIGN
 
 // ----------------------------------------------------------------------------
 
 def `raw-word`[$: P]: P[java.lang.String] = P { WORD_ID.repX(min = 1).! }
 
-def `raw-block`[$: P] = P {
-  def util(`start`: java.lang.String, `end`: java.lang.String)[$: P] = P {
+def `raw-block`[$: P] = P:
+  def bracketed(`start`: java.lang.String, `end`: java.lang.String)[$: P] = P {
     `start` ~~/ (!`end` ~~ AnyChar).repX(min = 0).! ~~ `end`
   }
-  util("(", ")") | util("[", "]") | util("{", "}")
-}
+  bracketed("(", ")") | bracketed("[", "]") | bracketed("{", "}")
+end `raw-block`
 
 // ----------------------------------------------------------------------------
 
-def document[$: P]: P[Document] = P {
+def document[$: P]: P[Document] = P:
   (Start ~ expr ~ End)
     .map(stmts => Document(stmts))
-}
+end document
 
-def expr[$: P]: P[Expr] = P {
+def expr[$: P]: P[Expr] = P:
   control |
     literal
-}
+end expr
 
 // ----------------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ def expr[$: P]: P[Expr] = P {
   *
   * @return
   */
-def literal[$: P]: P[Expr] = P {
+def literal[$: P]: P[Expr] = P:
   collection |
     unit |
     boolean |
@@ -72,71 +72,73 @@ def literal[$: P]: P[Expr] = P {
     text |
     application |
     id
-}
+end literal
 
-def id[$: P]: P[Id] = P {
+def id[$: P]: P[Id] = P:
   (`raw-word` | ("`" ~~/ `raw-block`)).map(value => Id(value))
-}
+end id
 
 def unit[$: P]: P[Unit] = P { "unit".map(_ => Unit) }
 
-def boolean[$: P]: P[Boolean] = P {
+def boolean[$: P]: P[Boolean] = P:
   ("true" | "false").!.map {
     case "true"  => Boolean(true)
     case "false" => Boolean(false)
   }
-}
+end boolean
 
 def number[$: P]: P[Number] = P { decimal | integer }
 
-def integer[$: P]: P[Integer] = P {
+def integer[$: P]: P[Integer] = P:
   (NUMBER_SIGN.? ~~ NUMBER_SEQ)
     .map((sign, value) => Integer(sign.getOrElse(1) * value.toInt))
-}
+end integer
 
-def decimal[$: P]: P[Decimal] = P {
+def decimal[$: P]: P[Decimal] = P:
   (NUMBER_SIGN.? ~~ (NUMBER_SEQ ~~ "." ~~ NUMBER_SEQ).!)
     .map((sign, value) => Decimal(sign.getOrElse(1) * value.toDouble))
-}
+end decimal
 
-def text[$: P]: P[Text] = P {
+def text[$: P]: P[Text] = P:
   ("\"" ~~/ (`raw-word` | `raw-block`))
     .map(value => Text(value))
-}
+end text
 
 // ----------------------------------------------------------------------------
 
-def collection[$: P]: P[Collection] = P { tuple | sequence | set }
+def collection[$: P]: P[Collection] = P:
+  tuple | sequence | set
+end collection
 
-def tuple[$: P]: P[Tuple] = P {
+def tuple[$: P]: P[Tuple] = P:
   ("(" ~/ expr.rep(min = 1, sep = ",") ~ ",".? ~ ")")
     .map(exprs => Tuple(exprs*))
-}
+end tuple
 
-def sequence[$: P]: P[Sequence] = P {
+def sequence[$: P]: P[Sequence] = P:
   ("[" ~/ expr.rep(min = 1, sep = ",") ~ ",".? ~ "]")
     .map(exprs => Sequence(exprs*))
-}
+end sequence
 
-def set[$: P]: P[Set] = P {
+def set[$: P]: P[Set] = P:
   ("{" ~/ expr.rep(min = 1, sep = ",") ~ ",".? ~ "}")
     .map(exprs => Set(exprs*))
-}
+end set
 
 // ----------------------------------------------------------------------------
 
-def control[$: P]: P[Control] = P {
+def control[$: P]: P[Control] = P:
   `if` | `while` | `for`
-}
+end control
 
-def `if`[$: P]: P[If] = P {
+def `if`[$: P]: P[If] = P:
   ("if" ~ expr ~ "then" ~ expr ~ ("else" ~ expr).?)
     .map((condition, thenBranch, elseBranch) =>
       If(condition, thenBranch, elseBranch),
     )
-}
+end `if`
 
-def `match`[$: P]: P[Match] = P {
+def `match`[$: P]: P[Match] = P:
   def `pattern-clause`[$: P]: P[Match.Clause] = P {
     ("when" ~ expr ~ "then" ~ expr)
       .map((pattern, body) => Match.PatternClause(pattern, body))
@@ -153,29 +155,29 @@ def `match`[$: P]: P[Match] = P {
         Seq.empty[Match.Clause] ++ patternClauses :+ elseClause,
       ),
     )
-}
+end `match`
 
-def `while`[$: P]: P[While] = P {
+def `while`[$: P]: P[While] = P:
   ("while" ~ expr ~ "do" ~ expr)
     .map((condition, action) => While(condition, action))
-}
+end `while`
 
-def `for`[$: P]: P[For] = P {
+def `for`[$: P]: P[For] = P:
   def `extractor-generators`[$: P]: P[Seq[For.ExtractorGenerator]] = P {
     ("let" ~ id ~ "=" ~ expr)
       .map((id, expr) => For.ExtractorGenerator(id, expr))
       .rep(min = 1)
   }
-  def `expression-generators`[$: P]: P[Seq[For.ExpressionGenerator]] = P {
+  def `expression-generator`[$: P]: P[Seq[For.ExpressionGenerator]] = P {
     expr.map(expr => Seq(For.ExpressionGenerator(expr)))
   }
-  ("for" ~ (`extractor-generators` | `expression-generators`) ~ "do" ~ expr)
+  ("for" ~ (`extractor-generators` | `expression-generator`) ~ "do" ~ expr)
     .map((generators, action) => For(generators, action))
-}
+end `for`
 
 // ----------------------------------------------------------------------------
 
-def application[$: P]: P[Application] = P {
+def application[$: P]: P[Application] = P:
   (id ~~ collection)
     .map((id, collection) => FunctionApplication(id, collection))
-}
+end application
