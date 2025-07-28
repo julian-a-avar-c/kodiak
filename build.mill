@@ -5,6 +5,7 @@ import mill.*
 import mill.scalalib.*
 import mill.scalanativelib.*
 import mill.scalalib.scalafmt.ScalafmtModule
+import mill.api.Task.Simple
 
 object Deps:
   object Version:
@@ -40,7 +41,9 @@ object kodiak extends KodiakModule:
     def mvnDeps    = Seq(
       Deps.`fastparse`,
     )
-    object test extends ScalaNativeTests, TestModule.ScalaTest:
+    def scalacOptions = Seq("-explain")
+
+    object test extends ScalaNativeTests, TestModule.ScalaTest, ScalafmtModule:
       def scalaTestVersion = Deps.Version.`scalatest`
     end test
   end parser
