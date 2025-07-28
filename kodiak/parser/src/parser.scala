@@ -106,9 +106,7 @@ end text
 
 // ----------------------------------------------------------------------------
 
-def collection[$: P]: P[Collection] = P:
-  tuple | sequence | set
-end collection
+def collection[$: P]: P[Collection] = P { tuple | sequence | set }
 
 def tuple[$: P]: P[Tuple] = P:
   ("(" ~/ expr.rep(min = 1, sep = ",") ~ ",".? ~ ")")
@@ -127,9 +125,7 @@ end set
 
 // ----------------------------------------------------------------------------
 
-def control[$: P]: P[Control] = P:
-  `if` | `while` | `for`
-end control
+def control[$: P]: P[Control] = P { `if` | `while` | `for` }
 
 def `if`[$: P]: P[If] = P:
   ("if" ~ expr ~ "then" ~ expr ~ ("else" ~ expr).?)
