@@ -149,10 +149,11 @@ object Expr:
 
   def `function-application`[$: P]: P[Ast.FunctionApplication] = P:
     import KodiakWhitespace.given
-    def args[$: P]: P[Seq[Ast.Collection]] = P:
-      NoCut(group.map(expr => Seq(Ast.Tuple(expr)))) |
-        tuple.rep(min = 1)
-    (id ~ args)
+    def args[$: P]: P[Ast.Collection] = P:
+      collection | group.map(expr => Ast.Tuple(expr))
+    def `arg-groups`[$: P]: P[Seq[Ast.Collection]] = P:
+      args.rep(min = 1)
+    (id ~ `arg-groups`)
       .map((function, args) => Ast.FunctionApplication(function, args*))
   end `function-application`
 

@@ -119,18 +119,36 @@ class NumberSpec extends ParserSpec:
 
   // --------------------------------------------------------------------------
 
-  "Kodiak's raw number parser" should "parse a number block" in {
-    val input    = "f#(123_456.789)"
-    val expected = Ast.RawNumber("123_456.789", Ast.Id("f"))
+  "Kodiak's raw number parser" should "parse a number word" in {
+    val input    = "f#abc_def"
+    val expected = Ast.RawNumber("abc_def", Ast.Id("f"))
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`raw-number`)
   }
 
-  it should "parse a number word" in {
-    val input    = "f#123_456"
-    val expected = Ast.RawNumber("123_456", Ast.Id("f"))
+  it should "parse a parenthesized number block" in {
+    val input    = "f#(abc_def.ghi_jfk)"
+    val expected = Ast.RawNumber("abc_def.ghi_jfk", Ast.Id("f"))
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.`raw-number`)
+  }
+
+  it should "parse a square bracketed number block" in {
+    val input    = "f#[abc_def.ghi_jfk]"
+    val expected = Ast.RawNumber("abc_def.ghi_jfk", Ast.Id("f"))
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.`raw-number`)
+  }
+
+  it should "parse a curly bracketed number block" in {
+    val input    = "f#{abc_def.ghi_jfk}"
+    val expected = Ast.RawNumber("abc_def.ghi_jfk", Ast.Id("f"))
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)

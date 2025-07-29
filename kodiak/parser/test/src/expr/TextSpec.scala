@@ -9,8 +9,35 @@ class TextSpec extends ParserSpec:
     val input    = "\"hello"
     val expected = Ast.Text("hello")
 
-    // assertParse(input, Ast.Document(expected), Parser.document)
-    // assertParse(input, expected, Parser.expr)
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.text)
+  }
+
+  it should "parse parenthesis text block" in {
+    val input    = "\"(hello)"
+    val expected = Ast.Text("hello")
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.text)
+  }
+
+  it should "parse square bracket text block" in {
+    val input    = "\"[hello]"
+    val expected = Ast.Text("hello")
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.text)
+  }
+
+  it should "parse curly bracket text block" in {
+    val input    = "\"{hello}"
+    val expected = Ast.Text("hello")
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.text)
   }
 end TextSpec
