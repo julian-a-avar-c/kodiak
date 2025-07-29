@@ -1,24 +1,16 @@
-package kodiak.parser.bak
+package kodiak.parser
 
-import scala.annotation.{tailrec, switch}
-import fastparse.{Whitespace, ParsingRun}
-import fastparse.internal.{Msgs, Util}
+import scala.annotation.tailrec
 
-/** Check for verbose failures and report
-  *
-  * @param ctx
-  * @param current
-  * @return
-  */
-inline def exitAndReport(ctx: ParsingRun[?])(index: Int) =
-  if ctx.verboseFailures then ctx.reportTerminalMsg(index, Msgs.empty)
-  ctx.freshSuccessUnit(index)
+import fastparse.*
 
-/** Whitespace syntax that supports (?) line-comments and (? ?)
-  * multiline-comments, *including nesting* of (? ?) comments, as is the case in
-  * the Kodiak programming language
-  */
 object KodiakWhitespace:
+  import fastparse.internal.{Msgs, Util}
+
+  inline def exitAndReport(ctx: ParsingRun[?])(index: Int) =
+    if ctx.verboseFailures then ctx.reportTerminalMsg(index, Msgs.empty)
+    ctx.freshSuccessUnit(index)
+
   given whitespace: Whitespace:
     type State = Int
     object State:
@@ -134,7 +126,11 @@ object KodiakWhitespace:
         end if
       end rec
 
-      rec(index = ctx.index, states = Seq(State.ToplevelWhitespace), nesting = 0)
+      rec(
+        index = ctx.index,
+        states = Seq(State.ToplevelWhitespace),
+        nesting = 0,
+      )
     end apply
 
     def unreachable(

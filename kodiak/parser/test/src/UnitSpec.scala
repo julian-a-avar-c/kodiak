@@ -1,4 +1,4 @@
-package kodiak.parser.bak
+package kodiak.parser
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.*

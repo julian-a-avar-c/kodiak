@@ -1,9 +1,10 @@
-package kodiak.parser.bak
+package kodiak.parser
 
 import fastparse.ParsingRun
 import fastparse.Parsed.{Success, Failure}
 import org.scalactic.source.Position
 import org.scalactic.Prettifier
+import kodiak.parser.UnitSpec
 
 import kodiak.parser.ast.Ast
 
@@ -18,7 +19,7 @@ abstract class ParserSpec extends UnitSpec:
       pos: Position,
       use: UseDefaultAssertions.type,
   ) =
-    parse(input, parser) match
+    parse(input, Parser) match
       case Success(actual, index) =>
         assert(
           actual == expected,
