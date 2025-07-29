@@ -3,7 +3,7 @@ package expr
 
 import kodiak.parser.ast.*
 
-class DecimalSpec extends ParserSpec:
+class NumberSpec extends ParserSpec:
 
   // --------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.decimal)
+    assertParse(input, expected, Expr.`decimal`)
   }
 
   it should "parse a grouped decimal" in {
@@ -22,7 +22,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.decimal)
+    assertParse(input, expected, Expr.`decimal`)
   }
 
   it should "parse a negative decimal" in {
@@ -31,7 +31,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.decimal)
+    assertParse(input, expected, Expr.`decimal`)
   }
 
   it should "parse a positive decimal" in {
@@ -40,7 +40,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.decimal)
+    assertParse(input, expected, Expr.`decimal`)
   }
 
   it should "parse a negative grouped decimal" in {
@@ -49,7 +49,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.decimal)
+    assertParse(input, expected, Expr.`decimal`)
   }
 
   it should "parse a positive grouped decimal" in {
@@ -58,7 +58,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.decimal)
+    assertParse(input, expected, Expr.`decimal`)
   }
 
   // --------------------------------------------------------------------------
@@ -69,7 +69,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.integer)
+    assertParse(input, expected, Expr.`integer`)
   }
 
   it should "parse a grouped integer" in {
@@ -78,7 +78,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.integer)
+    assertParse(input, expected, Expr.`integer`)
   }
 
   it should "parse a negative integer" in {
@@ -87,7 +87,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.integer)
+    assertParse(input, expected, Expr.`integer`)
   }
 
   it should "parse a positive integer" in {
@@ -96,7 +96,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.integer)
+    assertParse(input, expected, Expr.`integer`)
   }
 
   it should "parse a negative grouped integer" in {
@@ -105,7 +105,7 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.integer)
+    assertParse(input, expected, Expr.`integer`)
   }
 
   it should "parse a positive grouped integer" in {
@@ -114,12 +114,12 @@ class DecimalSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.integer)
+    assertParse(input, expected, Expr.`integer`)
   }
 
   // --------------------------------------------------------------------------
 
-  "Kodiak's raw number parser" should "parse a raw block number" in {
+  "Kodiak's raw number parser" should "parse a number block" in {
     val input    = "f#(123_456.789)"
     val expected = Ast.RawNumber("123_456.789", Ast.Id("f"))
 
@@ -128,7 +128,7 @@ class DecimalSpec extends ParserSpec:
     assertParse(input, expected, Expr.`raw-number`)
   }
 
-  it should "parse a raw word number" in {
+  it should "parse a number word" in {
     val input    = "f#123_456"
     val expected = Ast.RawNumber("123_456", Ast.Id("f"))
 
@@ -137,4 +137,4 @@ class DecimalSpec extends ParserSpec:
     assertParse(input, expected, Expr.`raw-number`)
   }
 
-end DecimalSpec
+end NumberSpec

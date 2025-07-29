@@ -23,10 +23,10 @@ class ExprSpec extends ParserSpec:
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.id)
-    assertParse(input, expected, Expr.`word-id`)
+    assertParse(input, expected, Expr.`natural-id`)
   }
 
-  it should "parse a raw word id" in {
+  it should "parse an id word" in {
     val input    = "`123abc"
     val expected = Ast.Id("123abc")
 
@@ -36,7 +36,7 @@ class ExprSpec extends ParserSpec:
     assertParse(input, expected, Expr.`raw-id`)
   }
 
-  it should "parse a raw block id" in {
+  it should "parse an id block" in {
     val input    = "`(123abc)"
     val expected = Ast.Id("123abc")
 

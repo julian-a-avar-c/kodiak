@@ -25,18 +25,15 @@ object Parser:
     import Expr.*
 
     boolean |
-      decimal |
-      integer |
-      NoCut(`if`) |
-      NoCut(`match`) |
-      NoCut(`while`) |
-      NoCut(`for`) |
-      NoCut(tuple) |
+      number |
+      NoCut(control) |
+      NoCut(collection) |
       NoCut(group) |
+      text |
       `raw-number` |
       `raw-id` |
       `function-application` |
-      `word-id`
+      `natural-id`
   end expr
 
   def keyword[$: P](value: String) = P(value ~~ !ID)(using value, summon)

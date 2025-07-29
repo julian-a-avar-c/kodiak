@@ -10,15 +10,9 @@ import Parser.expr
 import Terminal.{DIGIT, DIGITS, WORD, ID, RAW_BLOCK, `true`, `false`, SIGN}
 
 object Expr:
+
   def id[$: P]: P[Ast.Id] = P:
-    NoCut(`raw-id`) | `word-id`
-
-  def `word-id`[$: P]: P[Ast.Id] = P:
-    ((!DIGIT ~~ ID) ~~ ID.repX(min = 0)).!.map(value => Ast.Id(value))
-
-  def `raw-id`[$: P]: P[Ast.Id] = P:
-    ("`" ~~/ (WORD | RAW_BLOCK))
-      .map(value => Ast.Id(value))
+    NoCut(`raw-id`) | `natural-id`
 
   def group[$: P]: P[Ast.Expr] = P:
     import KodiakWhitespace.given
@@ -28,6 +22,9 @@ object Expr:
 
   def boolean[$: P]: P[Ast.Boolean] = P:
     `true` | `false`
+
+  def number[$: P]: P[Ast.Number] = P:
+    decimal | integer
 
   def integer[$: P]: P[Ast.Integer] = P:
     (SIGN.? ~~ DIGITS)
@@ -39,14 +36,39 @@ object Expr:
         Ast.Decimal(sign.getOrElse(1) * (integral + "." + decimal).toDouble),
       )
 
+  def `natural-id`[$: P]: P[Ast.Id] = P:
+    ((!DIGIT ~~ ID) ~~ ID.repX(min = 0)).!.map(value => Ast.Id(value))
+
+  def `raw-id`[$: P]: P[Ast.Id] = P:
+    def `word-id`[$: P] = P:
+      ("`" ~~/ WORD)
+    def `block-id`[$: P] = P:
+      ("`" ~~/ RAW_BLOCK)
+    (NoCut(`block-id`) | `word-id`)
+      .map(value => Ast.Id(value))
+
   def `raw-number`[$: P]: P[Ast.RawNumber] = P:
-    (`word-id` ~~ "#" ~~ (WORD | RAW_BLOCK))
-      .map((interpolator, value) => Ast.RawNumber(value, interpolator))
+    def `number-word`[$: P]: P[Ast.RawNumber] = P:
+      (id ~~ "#" ~~/ WORD)
+        .map((id, value) => Ast.RawNumber(value, id))
+    def `number-block`[$: P]: P[Ast.RawNumber] = P:
+      (id ~~ "#" ~~/ RAW_BLOCK)
+        .map((interpolator, value) => Ast.RawNumber(value, interpolator))
+    NoCut(`number-block`) | `number-word`
+
+  def text[$: P]: P[Ast.Text] = P:
+    def `text-word`[$: P] = P:
+      ("\"" ~~/ WORD)
+    def `text-block`[$: P] = P:
+      ("\"" ~~/ RAW_BLOCK)
+
+    (NoCut(`text-block`) | `text-word`)
+      .map((value) => Ast.Text(value))
 
   // ------------------------------------------------------------------------
 
   def collection[$: P]: P[Ast.Collection] = P:
-    tuple
+    NoCut(tuple) | NoCut(sequence) | set
 
   def tuple[$: P]: P[Ast.Tuple] = P:
     import KodiakWhitespace.given
@@ -85,6 +107,9 @@ object Expr:
   end set
 
   // ------------------------------------------------------------------------
+
+  def control[$: P]: P[Ast.Control] = P:
+    NoCut(`if`) | NoCut(`match`) | NoCut(`while`) | `for`
 
   def `if`[$: P]: P[Ast.If] = P:
     import KodiakWhitespace.given

@@ -35,4 +35,68 @@ class CollectionSpec extends ParserSpec:
     assertParse(input, expected, Expr.tuple)
   }
 
+  // --------------------------------------------------------------------------
+
+  "Kodiak's sequence parser" should "parse an empty sequence" in {
+    val input    = "[]"
+    val expected = Ast.Sequence()
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.collection)
+    assertParse(input, expected, Expr.sequence)
+  }
+
+  it should "parse a single item sequence" in {
+    val input    = "[42,]"
+    val expected = Ast.Sequence(Ast.Integer(42))
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.collection)
+    assertParse(input, expected, Expr.sequence)
+  }
+
+  it should "parse a multi item sequence" in {
+    val input    = "[1, 2, 3]"
+    val expected = Ast.Sequence(Ast.Integer(1), Ast.Integer(2), Ast.Integer(3))
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.collection)
+    assertParse(input, expected, Expr.sequence)
+  }
+
+  // --------------------------------------------------------------------------
+
+  "Kodiak's set parser" should "parse an empty set" in {
+    val input    = "{}"
+    val expected = Ast.Set()
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.collection)
+    assertParse(input, expected, Expr.set)
+  }
+
+  it should "parse a single item set" in {
+    val input    = "{42,}"
+    val expected = Ast.Set(Ast.Integer(42))
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.collection)
+    assertParse(input, expected, Expr.set)
+  }
+
+  it should "parse a multi item set" in {
+    val input    = "{1, 2, 3}"
+    val expected = Ast.Set(Ast.Integer(1), Ast.Integer(2), Ast.Integer(3))
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.collection)
+    assertParse(input, expected, Expr.set)
+  }
+
 end CollectionSpec
