@@ -6,7 +6,8 @@ case class Document(stmts: Expr*) extends Ast
 
 type Stmts = scala.Seq[Expr]
 
-sealed trait Expr extends Ast
+sealed trait Expr              extends Ast
+case class Exprs(items: Expr*) extends Ast
 
 sealed trait Application extends Expr
 sealed trait Stmt        extends Expr
@@ -14,6 +15,9 @@ sealed trait Literal     extends Expr
 sealed trait Control     extends Expr
 
 // ----------------------------------------------------------------------------
+
+case class OperatorApplication(left: Expr, op: Literal.Id, right: Expr)
+    extends Application
 
 case class FunctionApplication(function: Expr, args: Literal.Collection)
     extends Application
@@ -49,9 +53,9 @@ object Literal:
   case class Integer(value: scala.Int)    extends Number
   case class Decimal(value: scala.Double) extends Number
 
-  case class Tuple(values: Expr*)    extends Collection
-  case class Sequence(values: Expr*) extends Collection
-  case class Set(values: Expr*)      extends Collection
+  case class Tuple(values: Exprs)    extends Collection
+  case class Sequence(values: Exprs) extends Collection
+  case class Set(values: Exprs)      extends Collection
 end Literal
 
 // ----------------------------------------------------------------------------
