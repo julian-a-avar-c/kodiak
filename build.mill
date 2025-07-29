@@ -3,20 +3,20 @@ package build
 
 import mill.*
 import mill.scalalib.*
-import mill.scalanativelib.*
+// import mill.scalanativelib.*
 import mill.scalalib.scalafmt.ScalafmtModule
 import mill.api.Task.Simple
 
 object Deps:
   object Version:
     def `scalatest` = "3.2.19"
-  def `os-lib`    = mvn"com.lihaoyi::os-lib::0.11.4"
-  def `fastparse` = mvn"com.lihaoyi::fastparse::3.1.1"
-  def `mainargs`  = mvn"com.lihaoyi::mainargs::0.7.6"
-  def `scalatest` = mvn"org.scalatest::scalatest::${Version.`scalatest`}"
+  def `os-lib`    = mvn"com.lihaoyi::os-lib:0.11.4"
+  def `fastparse` = mvn"com.lihaoyi::fastparse:3.1.1"
+  def `mainargs`  = mvn"com.lihaoyi::mainargs:0.7.6"
+  def `scalatest` = mvn"org.scalatest::scalatest:${Version.`scalatest`}"
 end Deps
 
-trait KodiakModule extends ScalaNativeModule, ScalafmtModule:
+trait KodiakModule extends ScalaModule, ScalafmtModule:
   def scalaVersion       = "3.7.1"
   def scalaNativeVersion = "0.5.8"
 end KodiakModule
@@ -26,24 +26,24 @@ object kodiak extends KodiakModule:
     Deps.`os-lib`,
   )
 
-  object cli extends KodiakModule:
-    def moduleDeps = Seq(kodiak, parser)
-    def mvnDeps    = Seq(
-      Deps.`os-lib`,
-      Deps.`fastparse`,
-      Deps.`mainargs`,
-    )
-    def scalacOptions = Seq("-deprecation")
-  end cli
+  // object cli extends KodiakModule:
+  //   def moduleDeps = Seq(kodiak, parser)
+  //   def mvnDeps    = Seq(
+  //     Deps.`os-lib`,
+  //     Deps.`fastparse`,
+  //     Deps.`mainargs`,
+  //   )
+  //   def scalacOptions = Seq("-deprecation")
+  // end cli
 
-  object parser extends KodiakModule:
+  object parser extends  KodiakModule:
     def moduleDeps = Seq(kodiak)
     def mvnDeps    = Seq(
       Deps.`fastparse`,
     )
     def scalacOptions = Seq("-explain")
 
-    object test extends ScalaNativeTests, TestModule.ScalaTest, ScalafmtModule:
+    object test extends ScalaTests, TestModule.ScalaTest, ScalafmtModule:
       def scalaTestVersion = Deps.Version.`scalatest`
     end test
   end parser

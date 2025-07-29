@@ -3,30 +3,42 @@ package kodiak.parser
 import fastparse.*
 import fastparse.NoWhitespace.*
 
-package ast {
-  sealed trait Ast
-  object Ast:
-    sealed trait Expr              extends Ast
-    case class Integer(value: Int) extends Expr
-}
-
 import ast.*
+import Terminal.*
 
-def parse[T <: Ast](
-    input: String,
-    parser: ParsingRun[Any] ?=> ParsingRun[T],
-): Parsed[T] =
-  fastparse.parse(input, parser(using _))
+object Parser:
 
-def Parser[$: P] = P:
-  Expr
+  def parse[T <: Ast](
+      input: String,
+      parser: ParsingRun[Any] ?=> ParsingRun[T],
+  ): Parsed[T] =
+    fastparse.parse(input, parser(using _))
 
-def Expr[$: P] = P:
-  Group | Integer
+  // --------------------------------------------------------------------------
 
-def Group[$: P]: P[Ast.Expr] = P:
-  "(" ~/ Expr ~ ")"
+  def document[$: P] = P:
+    import KodiakWhitespace.given
+    (Start ~ expr.rep(min = 0) ~ End)
+      .map(exprs => Ast.Document(exprs*))
 
-def Integer[$: P]: P[Ast.Integer] = P:
-  CharsWhileIn("0-9").repX(min = 0, sep = "_".?).!
-    .map((chars) => Ast.Integer(chars.toInt))
+  def expr[$: P] = P:
+    import Expr.*
+
+    boolean |
+      decimal |
+      integer |
+      NoCut(`if`) |
+      NoCut(`match`) |
+      NoCut(`while`) |
+      NoCut(`for`) |
+      NoCut(tuple) |
+      NoCut(group) |
+      `raw-number` |
+      `raw-id` |
+      `function-application` |
+      `word-id`
+  end expr
+
+  def keyword[$: P](value: String) = P(value ~~ !ID)(using value, summon)
+
+end Parser

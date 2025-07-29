@@ -19,7 +19,7 @@ abstract class ParserSpec extends UnitSpec:
       pos: Position,
       use: UseDefaultAssertions.type,
   ) =
-    parse(input, Parser) match
+    Parser.parse(input, parser) match
       case Success(actual, index) =>
         assert(
           actual == expected,

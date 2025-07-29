@@ -5,18 +5,18 @@ import kodiak.parser.ast.*
 
 class CommentSpec extends ParserSpec:
 
-  "Kodiak's comment parser" should "parse singleline comments" in {
-    // val input    = "(?) Hello, World!"
-    // val expected = Document()
+  "Kodiak's comment parser" should "parse a single singleline comment" in {
+    val input    = "(?) Hello, World!"
+    val expected = Ast.Document()
 
-    // assertParse(input, expected, document)
+    assertParse(input, expected, Parser.document)
   }
 
-  "Kodiak's literal parser" should "parse positive integers" in {
-    val input    = "1"
-    val expected = Ast.Integer(1)
+  it  should "parse a single multiline comment" in {
+    val input    = "(? Hello, World! ?)"
+    val expected = Ast.Document()
 
-    assertParse(input, expected, Parser)
+    assertParse(input, expected, Parser.document)
   }
 
 end CommentSpec
