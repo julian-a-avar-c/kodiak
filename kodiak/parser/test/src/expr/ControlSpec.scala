@@ -9,6 +9,8 @@ class ControlSpec extends ParserSpec:
     val input    = "if true then 42"
     val expected = Ast.If(Ast.True, Ast.Integer(42))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`if`)
   }
 
@@ -16,6 +18,8 @@ class ControlSpec extends ParserSpec:
     val input    = "if true then 42 else 69"
     val expected = Ast.If(Ast.True, Ast.Integer(42), Some(Ast.Integer(69)))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`if`)
   }
 
@@ -24,6 +28,8 @@ class ControlSpec extends ParserSpec:
     val expected =
       Ast.If(Ast.True, Ast.Integer(42), Some(Ast.If(Ast.True, Ast.Integer(69))))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`if`)
   }
 
@@ -35,6 +41,8 @@ class ControlSpec extends ParserSpec:
       Some(Ast.If(Ast.True, Ast.Integer(69), Some(Ast.Integer(7)))),
     )
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`if`)
   }
 
@@ -45,6 +53,8 @@ class ControlSpec extends ParserSpec:
     val expected =
       Ast.Match(Ast.Integer(42), Ast.Match.ElsePattern(Ast.Integer(7)))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`match`)
   }
 
@@ -54,6 +64,8 @@ class ControlSpec extends ParserSpec:
     val input    = "while true do 7"
     val expected = Ast.While(Ast.True, Ast.Integer(7))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`while`)
   }
 
@@ -71,6 +83,8 @@ class ControlSpec extends ParserSpec:
       Ast.Integer(7),
     )
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`for`)
   }
 

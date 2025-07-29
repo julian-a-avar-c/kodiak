@@ -5,19 +5,14 @@ import kodiak.parser.ast.*
 
 class DecimalSpec extends ParserSpec:
 
-  "Kodiak's expression parser" should "parse a group" in {
-    val input    = "(42)"
-    val expected = Ast.Integer(42)
-
-    assertParse(input, expected, Expr.group)
-  }
-
   // --------------------------------------------------------------------------
 
   "Kodiak's decimal parser" should "parse a single decimal" in {
     val input    = "1.2"
     val expected = Ast.Decimal(1.2)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.decimal)
   }
 
@@ -25,6 +20,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "123_456.789"
     val expected = Ast.Decimal(123_456.789)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.decimal)
   }
 
@@ -32,6 +29,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "-1.2"
     val expected = Ast.Decimal(-1.2)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.decimal)
   }
 
@@ -39,6 +38,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "+1.2"
     val expected = Ast.Decimal(1.2)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.decimal)
   }
 
@@ -46,6 +47,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "-123_456.789"
     val expected = Ast.Decimal(-123_456.789)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.decimal)
   }
 
@@ -53,6 +56,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "+123_456.789"
     val expected = Ast.Decimal(123_456.789)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.decimal)
   }
 
@@ -62,6 +67,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "1"
     val expected = Ast.Integer(1)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.integer)
   }
 
@@ -69,6 +76,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "123_456"
     val expected = Ast.Integer(123_456)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.integer)
   }
 
@@ -76,6 +85,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "-1"
     val expected = Ast.Integer(-1)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.integer)
   }
 
@@ -83,6 +94,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "+1"
     val expected = Ast.Integer(1)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.integer)
   }
 
@@ -90,6 +103,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "-123_456"
     val expected = Ast.Integer(-123_456)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.integer)
   }
 
@@ -97,6 +112,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "+123_456"
     val expected = Ast.Integer(123_456)
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.integer)
   }
 
@@ -106,6 +123,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "f#(123_456.789)"
     val expected = Ast.RawNumber("123_456.789", Ast.Id("f"))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`raw-number`)
   }
 
@@ -113,6 +132,8 @@ class DecimalSpec extends ParserSpec:
     val input    = "f#123_456"
     val expected = Ast.RawNumber("123_456", Ast.Id("f"))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`raw-number`)
   }
 

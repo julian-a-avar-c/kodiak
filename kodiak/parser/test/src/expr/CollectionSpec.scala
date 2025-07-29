@@ -9,6 +9,9 @@ class CollectionSpec extends ParserSpec:
     val input    = "()"
     val expected = Ast.Tuple()
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.collection)
     assertParse(input, expected, Expr.tuple)
   }
 
@@ -16,6 +19,9 @@ class CollectionSpec extends ParserSpec:
     val input    = "(42,)"
     val expected = Ast.Tuple(Ast.Integer(42))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.collection)
     assertParse(input, expected, Expr.tuple)
   }
 
@@ -23,6 +29,9 @@ class CollectionSpec extends ParserSpec:
     val input    = "(1, 2, 3)"
     val expected = Ast.Tuple(Ast.Integer(1), Ast.Integer(2), Ast.Integer(3))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.collection)
     assertParse(input, expected, Expr.tuple)
   }
 

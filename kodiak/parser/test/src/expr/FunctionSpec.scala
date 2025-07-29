@@ -9,6 +9,8 @@ class FunctionSpec extends ParserSpec:
     val input    = "function()"
     val expected = Ast.FunctionApplication(Ast.Id("function"), Ast.Tuple())
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`function-application`)
   }
 
@@ -17,6 +19,8 @@ class FunctionSpec extends ParserSpec:
     val expected =
       Ast.FunctionApplication(Ast.Id("function"), Ast.Tuple(Ast.Integer(1)))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`function-application`)
   }
 
@@ -25,6 +29,8 @@ class FunctionSpec extends ParserSpec:
     val expected =
       Ast.FunctionApplication(Ast.Id("function"), Ast.Tuple(Ast.Integer(1)))
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`function-application`)
   }
 
@@ -35,6 +41,8 @@ class FunctionSpec extends ParserSpec:
       Ast.Tuple(Ast.Integer(1), Ast.Integer(2)),
     )
 
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
     assertParse(input, expected, Expr.`function-application`)
   }
 
