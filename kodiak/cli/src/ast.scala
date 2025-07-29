@@ -1,8 +1,8 @@
 package kodiak.cli
 
 import scala.scalanative.unsafe.{Zone, CQuote}
-import scala.scalanative.libc.stdio.{printf}
-import kodiak.cli.util.{unsafeToCString}
+import scala.scalanative.libc.stdio.printf
+import kodiak.cli.util.unsafeToCString
 
 import fastparse.Parsed.{Success, Failure}
 

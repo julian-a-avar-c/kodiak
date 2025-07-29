@@ -60,6 +60,30 @@ object Expr:
       .map(exprs => Ast.Tuple(exprs*))
   end tuple
 
+  def sequence[$: P]: P[Ast.Sequence] = P:
+    import KodiakWhitespace.given
+    def empty[$: P] = P:
+      "[]".map(_ => Seq.empty[Ast.Expr])./
+    def single[$: P] = P:
+      "[" ~~ !"?" ~/ expr.map(Seq(_)) ~ "," ~ "]"
+    def multi[$: P] = P:
+      "[" ~~ !"?" ~/ expr.rep(min = 2, sep = ",") ~ ",".? ~ "]"
+    (empty | NoCut(single) | multi)
+      .map(exprs => Ast.Sequence(exprs*))
+  end sequence
+
+  def set[$: P]: P[Ast.Set] = P:
+    import KodiakWhitespace.given
+    def empty[$: P] = P:
+      "{}".map(_ => Seq.empty[Ast.Expr])./
+    def single[$: P] = P:
+      "{" ~~ !"?" ~/ expr.map(Seq(_)) ~ "," ~ "}"
+    def multi[$: P] = P:
+      "{" ~~ !"?" ~/ expr.rep(min = 2, sep = ",") ~ ",".? ~ "}"
+    (empty | NoCut(single) | multi)
+      .map(exprs => Ast.Set(exprs*))
+  end set
+
   // ------------------------------------------------------------------------
 
   def `if`[$: P]: P[Ast.If] = P:

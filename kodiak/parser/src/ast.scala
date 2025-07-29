@@ -4,13 +4,13 @@ package ast
 sealed trait Ast
 object Ast:
   case class Document(value: Expr*) extends Ast
-  sealed trait Expr                extends Ast
+  sealed trait Expr                 extends Ast
 
-  case class Id(value: String)                                 extends Expr
-  sealed trait Boolean                                         extends Expr
-  sealed trait Number                                          extends Expr
-  sealed trait Collection                                      extends Expr
-  sealed trait Control                                         extends Expr
+  case class Id(value: String)                                      extends Expr
+  sealed trait Boolean                                              extends Expr
+  sealed trait Number                                               extends Expr
+  sealed trait Collection                                           extends Expr
+  sealed trait Control                                              extends Expr
   case class FunctionApplication(function: Expr, args: Collection*) extends Expr
 
   case object True  extends Boolean
@@ -20,7 +20,9 @@ object Ast:
   case class Decimal(value: Double)                     extends Number
   case class RawNumber(value: String, interpolator: Id) extends Number
 
-  case class Tuple(exprs: Expr*) extends Collection
+  case class Tuple(exprs: Expr*)    extends Collection
+  case class Sequence(exprs: Expr*) extends Collection
+  case class Set(exprs: Expr*)      extends Collection
 
   case class If(
       condition: Expr,

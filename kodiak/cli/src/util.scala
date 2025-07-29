@@ -6,9 +6,9 @@ import scala.scalanative.unsafe
 import scala.scalanative.unsafe.{Zone, CString, extern, Ptr, alloc}
 import scala.scalanative.posix.{termios, unistd}
 import termios.{TCSANOW, termios, tcgetattr, tcsetattr}
-import unistd.{STDIN_FILENO}
+import unistd.STDIN_FILENO
 
-import glibc_termios.{cfmakeraw}
+import glibc_termios.cfmakeraw
 
 extension (string: String)
   def unsafeToCString(using zone: Zone): CString =
@@ -19,12 +19,12 @@ extension [T](array: Array[T])
     ArraySeq.unsafeWrapArray(array)
 
 @extern
-object glibc_termios {
+object glibc_termios:
   def cfmakeraw(size: Ptr[termios]): Ptr[Byte] = extern
   def sandbox(): Unit                          = extern
-}
+end glibc_termios
 
-inline def rawMode(callback: => Unit)(using zone: Zone) = {
+inline def rawMode(callback: => Unit)(using zone: Zone) =
   // Save original terminal settings
   val (original, raw) = (
     alloc[termios](),
@@ -42,4 +42,4 @@ inline def rawMode(callback: => Unit)(using zone: Zone) = {
 
   // Restore original settings
   tcsetattr(STDIN_FILENO, TCSANOW, original);
-}
+end rawMode

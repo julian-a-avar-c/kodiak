@@ -19,20 +19,18 @@ object Main:
       input: Option[String],
       @arg(short = 'i')
       interactive: Option[Boolean],
-  ) = {
+  ) =
     if interactive.contains(true) then {}
     else
       input
         .map { input =>
-          os.FilePath(input) match {
+          os.FilePath(input) match
             case input: os.Path    => input
             case input: os.RelPath => os.pwd / input
             case input: os.SubPath => os.pwd / input
-          }
         }
         .filter(os.exists)
         .map(kodiak.cli.ast)
-  }
 
   def main(args: Array[String]): Unit =
     ParserForMethods(this).runOrExit(args.unsafeWrapArray)

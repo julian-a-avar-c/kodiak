@@ -30,6 +30,7 @@ def repl() = Zone {
           stack += Stack.empty
           puts(c"kodiak> ")
           printPrompt = false
+        end if
 
         val c = getchar()
 
