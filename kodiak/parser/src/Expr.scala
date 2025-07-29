@@ -14,12 +14,6 @@ object Expr:
   def id[$: P]: P[Ast.Id] = P:
     NoCut(`raw-id`) | `natural-id`
 
-  def group[$: P]: P[Ast.Expr] = P:
-    import KodiakWhitespace.given
-    ("(" ~ !"?" ~/ expr ~ !"," ~ ")") |
-      ("[" ~ !"?" ~/ expr ~ !"," ~ "]") |
-      ("{" ~ !"?" ~/ expr ~ !"," ~ "}")
-
   def boolean[$: P]: P[Ast.Boolean] = P:
     `true` | `false`
 
@@ -67,44 +61,63 @@ object Expr:
 
   // ------------------------------------------------------------------------
 
+  sealed trait Collection[T](open: String, close: String):
+    import KodiakWhitespace.given
+    def empty[$: P]: P[Unit] = P:
+      (open ~~ close)./
+    def group[$: P]: P[Ast.Expr] = P:
+      (open ~~ !"?" ~/ expr ~ !"," ~ close)./
+    def single[$: P]: P[Seq[Ast.Expr]] = P:
+      (open ~~ !"?" ~/ expr.map(Seq(_)) ~ "," ~ close)./
+    def multi[$: P]: P[Seq[Ast.Expr]] = P:
+      (open ~~ !"?" ~/ expr.rep(min = 2, sep = ",") ~ ",".? ~ close)./
+
+    def parse[$: P]: P[T]
+  end Collection
+
+  case class ItemCollection(open: String, close: String)
+      extends Collection[Seq[Ast.Expr]](open, close):
+    def parse[$: P] = P:
+      empty.map(_ => Seq.empty) | NoCut(single) | multi
+  end ItemCollection
+
+  case class GroupCollection(open: String, close: String)
+      extends Collection[Seq[Ast.Expr]](open, close):
+    def parse[$: P] = P:
+      empty.map(_ => Seq.empty) |
+        NoCut(single) |
+        NoCut(this.group).map(Seq(_)) |
+        multi
+  end GroupCollection
+
+  case class Group(open: String, close: String)
+      extends Collection[Ast.Expr](open, close):
+    def parse[$: P] = this.group
+
+  def `group-collection`[$: P]: P[Ast.Collection] = P:
+    GroupCollection("(", ")").parse.map(Ast.Tuple(_*)) |
+      GroupCollection("[", "]").parse.map(Ast.Sequence(_*)) |
+      GroupCollection("{", "}").parse.map(Ast.Set(_*))
+
+  def group[$: P]: P[Ast.Expr] = P:
+    Group("(", ")").parse |
+      Group("[", "]").parse |
+      Group("{", "}").parse
+
   def collection[$: P]: P[Ast.Collection] = P:
     NoCut(tuple) | NoCut(sequence) | set
 
   def tuple[$: P]: P[Ast.Tuple] = P:
-    import KodiakWhitespace.given
-    def empty[$: P] = P:
-      "()".map(_ => Seq.empty[Ast.Expr])./
-    def single[$: P] = P:
-      "(" ~~ !"?" ~/ expr.map(Seq(_)) ~ "," ~ ")"
-    def multi[$: P] = P:
-      "(" ~~ !"?" ~/ expr.rep(min = 2, sep = ",") ~ ",".? ~ ")"
-    (empty | NoCut(single) | multi)
+    ItemCollection("(", ")").parse
       .map(exprs => Ast.Tuple(exprs*))
-  end tuple
 
   def sequence[$: P]: P[Ast.Sequence] = P:
-    import KodiakWhitespace.given
-    def empty[$: P] = P:
-      "[]".map(_ => Seq.empty[Ast.Expr])./
-    def single[$: P] = P:
-      "[" ~~ !"?" ~/ expr.map(Seq(_)) ~ "," ~ "]"
-    def multi[$: P] = P:
-      "[" ~~ !"?" ~/ expr.rep(min = 2, sep = ",") ~ ",".? ~ "]"
-    (empty | NoCut(single) | multi)
+    ItemCollection("[", "]").parse
       .map(exprs => Ast.Sequence(exprs*))
-  end sequence
 
   def set[$: P]: P[Ast.Set] = P:
-    import KodiakWhitespace.given
-    def empty[$: P] = P:
-      "{}".map(_ => Seq.empty[Ast.Expr])./
-    def single[$: P] = P:
-      "{" ~~ !"?" ~/ expr.map(Seq(_)) ~ "," ~ "}"
-    def multi[$: P] = P:
-      "{" ~~ !"?" ~/ expr.rep(min = 2, sep = ",") ~ ",".? ~ "}"
-    (empty | NoCut(single) | multi)
+    ItemCollection("{", "}").parse
       .map(exprs => Ast.Set(exprs*))
-  end set
 
   // ------------------------------------------------------------------------
 
@@ -149,10 +162,8 @@ object Expr:
 
   def `function-application`[$: P]: P[Ast.FunctionApplication] = P:
     import KodiakWhitespace.given
-    def args[$: P]: P[Ast.Collection] = P:
-      collection | group.map(expr => Ast.Tuple(expr))
     def `arg-groups`[$: P]: P[Seq[Ast.Collection]] = P:
-      args.rep(min = 1)
+      `group-collection`.rep(min = 1)
     (id ~ `arg-groups`)
       .map((function, args) => Ast.FunctionApplication(function, args*))
   end `function-application`

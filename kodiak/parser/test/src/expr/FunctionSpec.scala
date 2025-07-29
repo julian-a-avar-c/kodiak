@@ -58,7 +58,7 @@ class FunctionSpec extends ParserSpec:
   it should "parse a sequence grouping application" in {
     val input    = "function[1]"
     val expected =
-      Ast.FunctionApplication(Ast.Id("function"), Ast.Tuple(Ast.Integer(1)))
+      Ast.FunctionApplication(Ast.Id("function"), Ast.Sequence(Ast.Integer(1)))
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
@@ -80,6 +80,47 @@ class FunctionSpec extends ParserSpec:
     val expected = Ast.FunctionApplication(
       Ast.Id("function"),
       Ast.Sequence(Ast.Integer(1), Ast.Integer(2)),
+    )
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.`function-application`)
+  }
+
+  it should "parse an empty set application" in {
+    val input    = "function{}"
+    val expected = Ast.FunctionApplication(Ast.Id("function"), Ast.Set())
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.`function-application`)
+  }
+
+  it should "parse a set grouping application" in {
+    val input    = "function{1}"
+    val expected =
+      Ast.FunctionApplication(Ast.Id("function"), Ast.Set(Ast.Integer(1)))
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.`function-application`)
+  }
+
+  it should "parse a 1 element set application" in {
+    val input    = "function{1,}"
+    val expected =
+      Ast.FunctionApplication(Ast.Id("function"), Ast.Set(Ast.Integer(1)))
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.`function-application`)
+  }
+
+  it should "parse a 2 element set application" in {
+    val input    = "function{1, 2}"
+    val expected = Ast.FunctionApplication(
+      Ast.Id("function"),
+      Ast.Set(Ast.Integer(1), Ast.Integer(2)),
     )
 
     assertParse(input, Ast.Document(expected), Parser.document)
