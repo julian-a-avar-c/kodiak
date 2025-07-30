@@ -18,16 +18,24 @@ object Parser:
 
   def document[$: P] = P:
     import KodiakWhitespace.given
-    (Start ~ expr.rep(min = 0) ~ End)
+    (Start ~ exprs ~ End)
       .map(exprs => Ast.Document(exprs*))
 
-  def expr[$: P] = P:
+  def exprs[$: P] = P:
+    expr.rep(min = 0)
+
+  def expr[$: P]: P[Ast.Expr] = P:
     import Expr.*
     import Literal.*
 
     boolean |
       number |
       NoCut(control) |
+      NoCut(`val-definition`) |
+      NoCut(`var-definition`) |
+      NoCut(`set-definition`) |
+      NoCut(`let-definition`) |
+      NoCut(function) |
       NoCut(collection) |
       NoCut(group) |
       `raw-number` |

@@ -11,7 +11,9 @@ object Ast:
   sealed trait Number                                               extends Expr
   sealed trait Text                                                 extends Expr
   sealed trait Collection                                           extends Expr
+  case class Function(params: Ast.Collection, body: Expr)           extends Expr
   sealed trait Control                                              extends Expr
+  sealed trait Definition                                           extends Expr
   case class FunctionApplication(function: Expr, args: Collection*) extends Expr
 
   case object True  extends Boolean
@@ -39,10 +41,14 @@ object Ast:
   ) extends Control
   case class While(condition: Expr, body: Expr)              extends Control
   case class For(generators: Seq[For.Generator], body: Expr) extends Control
-
   object Match:
     sealed trait Pattern               extends Ast
     case class ElsePattern(body: Expr) extends Pattern
   object For:
     case class Generator(lhs: Id, rhs: Expr) extends Ast
+
+  case class ValDefinition(lhs: Id, rhs: Expr) extends Definition
+  case class VarDefinition(lhs: Id, rhs: Expr) extends Definition
+  case class SetDefinition(lhs: Id, rhs: Expr) extends Definition
+  case class LetDefinition(lhs: Id, rhs: Expr) extends Definition
 end Ast
