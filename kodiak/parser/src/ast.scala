@@ -7,6 +7,7 @@ object Ast:
   sealed trait Expr                 extends Ast
 
   case class Id(value: String)                                      extends Expr
+  object Unit                                                       extends Expr
   sealed trait Boolean                                              extends Expr
   sealed trait Number                                               extends Expr
   sealed trait Text                                                 extends Expr

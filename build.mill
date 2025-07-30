@@ -1,4 +1,4 @@
-//| mill-version: 1.0.1
+//| mill-version: 1.0.2
 package build
 
 import mill.*
@@ -19,70 +19,7 @@ end Deps
 
 // ----------------------------------------------------------------------------
 
-// trait KodiakModule
-//     extends ScalaModule,
-//       CrossScalaModule,
-//       PlatformScalaModule,
-//       ScalafmtModule:
-//   def scalaVersion  = "3.7.1"
-//   def scalacOptions = Seq("-deprecation", "-explain")
-
-//   trait KodiakTestModule
-//       extends ScalaTests,
-//         TestModule.ScalaTest,
-//         ScalafmtModule
-
-//   trait KodiakJvmTestModule extends KodiakTestModule
-
-//   trait KodiakNativeTestModule extends KodiakTestModule
-// end KodiakModule
-
-// trait KodiakJvmModule extends KodiakModule
-
-// trait KodiakNativeModule extends KodiakModule, ScalaNativeModule:
-//   def scalaNativeVersion = "0.5.8"
-
-// // ----------------------------------------------------------------------------
-
-// // ----------------------------------------------------------------------------
-
-// object kodiak extends KodiakJvmModule:
-//   def mvnDeps = Seq(
-//     Deps.`os-lib`,
-//   )
-
-//   object cli extends KodiakNativeModule:
-//     def moduleDeps = Seq(kodiak, compiler)
-//     def mvnDeps    = Seq(
-//       Deps.`os-lib`,
-//       Deps.`fastparse`,
-//       Deps.`mainargs`,
-//     )
-//   end cli
-
-//   object compiler extends Module:
-//     object jvm      extends Cross[JvmModule](scalaVersions)
-//     trait JvmModule extends Shared:
-//       object test extends ScalaTests, SharedTestModule
-
-//     object js      extends Cross[JsModule](scalaVersions)
-//     trait JsModule extends SharedJS:
-//       object test extends ScalaJSTests, SharedTestModule
-//   end compiler
-
-//   object parser extends KodiakJvmModule:
-//     def moduleDeps = Seq(kodiak)
-//     def mvnDeps    = Seq(
-//       Deps.`fastparse`,
-//     )
-
-//     object test extends KodiakTestModule:
-//       def scalaTestVersion = Deps.Version.`scalatest`
-//     end test
-//   end parser
-// end kodiak
-
-trait SharedModule extends PlatformScalaModule, PublishModule:
+trait SharedModule extends ScalaModule, PublishModule:
   def scalaVersion = "3.7.1"
 
   def publishVersion = "0.1.0"
@@ -103,49 +40,62 @@ trait SharedModule extends PlatformScalaModule, PublishModule:
   )
 end SharedModule
 
+trait SharedNativeModule extends SharedModule, ScalaNativeModule:
+  def scalaNativeVersion = "0.5.8"
+
+trait SharedPlatformModule extends SharedModule, PlatformScalaModule
+
 trait SharedTestModule extends TestModule.ScalaTest:
   def scalaTestVersion = Deps.Version.`scalatest`
 
-trait SharedNativeModule extends SharedModule, ScalaNativeModule:
-  def scalaNativeVersion = "0.5.8"
+trait SharedPlatformNativeModule
+    extends SharedPlatformModule,
+      SharedNativeModule
 
 // ----------------------------------------------------------------------------
 
 object kodiak extends Module:
   object core extends Module:
-    trait CoreModule extends SharedModule
-    object jvm       extends CoreModule, SharedModule
-    object native    extends CoreModule, SharedNativeModule
+    trait CoreModule extends SharedPlatformModule
+    object jvm       extends CoreModule, SharedPlatformModule
+    object native    extends CoreModule, SharedPlatformNativeModule
   end core
 
-  object cli extends Module:
-    object native extends SharedNativeModule:
-      def moduleDeps = Seq(kodiak.core.jvm, parser.jvm)
-      def mvnDeps    = Seq(Deps.`os-lib`, Deps.`mainargs`)
+  object cli extends SharedNativeModule:
+    def moduleDeps = Seq(kodiak.core.native, parser.native, interpreter.native)
+    def mvnDeps    = Seq(Deps.`os-lib`, Deps.`mainargs`)
   end cli
 
   object compiler extends Module:
-    trait CompilerModule extends SharedModule
+    trait CompilerModule extends SharedPlatformModule
 
-    object jvm extends CompilerModule, SharedModule:
+    object jvm extends CompilerModule, SharedPlatformModule:
       def moduleDeps = Seq(parser.jvm)
 
-    object native extends CompilerModule, SharedNativeModule:
+    object native extends CompilerModule, SharedPlatformNativeModule:
       def moduleDeps = Seq(parser.native)
   end compiler
 
-  object parser extends Module:
-    trait ParserModule extends SharedModule:
-      def moduleDeps = Seq(kodiak.core.jvm)
-      def mvnDeps    = Seq(
-        Deps.fastparse,
-      )
-    end ParserModule
+  object interpreter extends Module:
+    trait InterpreterModule extends SharedPlatformModule:
+      def mvnDeps = Seq(Deps.`os-lib`)
 
-    object jvm extends ParserModule, SharedModule:
+    object jvm extends InterpreterModule, SharedPlatformModule:
+      def moduleDeps = Seq(kodiak.core.jvm, parser.jvm)
+
+    object native extends InterpreterModule, SharedPlatformNativeModule:
+      def moduleDeps = Seq(kodiak.core.native, parser.native)
+  end interpreter
+
+  object parser extends Module:
+    trait ParserModule extends SharedPlatformModule:
+      def moduleDeps = Seq(kodiak.core.jvm)
+      def mvnDeps    = Seq(Deps.fastparse)
+
+    object jvm extends ParserModule, SharedPlatformModule:
       object test extends ScalaTests, SharedTestModule
 
-    object native extends ParserModule, SharedNativeModule:
+    object native extends ParserModule, SharedPlatformNativeModule:
       object test extends ScalaNativeTests, SharedTestModule
   end parser
 end kodiak

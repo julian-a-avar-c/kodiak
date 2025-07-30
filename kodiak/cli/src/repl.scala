@@ -1,16 +1,18 @@
 package kodiak.cli
 
-import scala.scalanative.unsafe.{Zone, CQuote, CChar, CInt}
+import scala.scalanative.unsafe.{Zone, CQuote, CChar, CInt, CString}
 import scala.scalanative.libc.stdio.{printf, puts, getchar, putchar}
 
 import kodiak.cli.util.*
 import scala.util.boundary
+import kodiak.parser.ast.Ast
+import kodiak.interpreter.Interpreter
 
 object chars:
   val CTRL_C = 3
   val ENTER  = 10
 
-def repl() = Zone {
+def repl(inputFile: Option[os.Path]) = Zone {
   printf(
     c"Welcome to Kodiak %s REPL!\n",
     kodiak.version.unsafeToCString,
@@ -18,33 +20,46 @@ def repl() = Zone {
   printf(c"Type in expressions for evaluation. Or try help.\n")
   printf(c"\n")
 
-  rawMode {
-    import collection.mutable.Stack
-    val stack: Stack[Stack[CInt]] = Stack.empty
+  if inputFile.isDefined
+  then load(inputFile.get)
 
-    var printPrompt = true
+  // rawMode {
+  //   import collection.mutable.Stack
+  //   val stack: Stack[Stack[CInt]] = Stack.empty
 
-    boundary { isRunning ?=>
-      while true do
-        if printPrompt then
-          stack += Stack.empty
-          puts(c"kodiak> ")
-          printPrompt = false
-        end if
+  //   var printPrompt = true
 
-        val c = getchar()
+  //   boundary { isRunning ?=>
+  //     while true do
+  //       if printPrompt then
+  //         stack += Stack.empty
+  //         puts(c"kodiak> ")
+  //         printPrompt = false
+  //       end if
 
-        // Early exit
-        if c == chars.CTRL_C then boundary.break(isRunning)
+  //       val c = getchar()
 
-        stack.last += c
-        putchar(c)
+  //       // Early exit
+  //       if c == chars.CTRL_C then boundary.break(isRunning)
 
-        if c == chars.ENTER then printPrompt = true
-      end while
-    }
+  //       stack.last += c
+  //       putchar(c)
 
-    for line <- stack do
-      printf(c"%s\n", line.map(_.toChar).mkString.unsafeToCString)
-  }
+  //       if c == chars.ENTER then printPrompt = true
+  //     end while
+  //   }
+
+  //   for line <- stack do
+  //     printf(c"%s\n", line.map(_.toChar).mkString.unsafeToCString)
+  // }
+}
+
+def load(inputFile: os.Path) = Zone {
+  val content = os.read(inputFile)
+  val ast     = kodiak.cli.ast(inputFile)
+
+  ast match
+    case Right(ast) => Interpreter.evaluate(ast)
+    case Left(err)  => printf(c"Error: %s\n", err.unsafeToCString)
+  end match
 }

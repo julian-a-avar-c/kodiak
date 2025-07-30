@@ -11,7 +11,28 @@ object Main:
   def sandbox() = Zone { rawMode { kodiak.cli.util.glibc_termios.sandbox() } }
 
   @main()
-  def repl() = kodiak.cli.repl()
+  def repl(
+      @arg(positional = true)
+      input: Option[String],
+      @arg(short = 'i')
+      interactive: Option[Boolean],
+  ) =
+    if interactive.contains(true) then {}
+    else
+      if input.isEmpty then kodiak.cli.repl(None)
+      else
+        input
+          .map { input =>
+            os.FilePath(input) match
+              case input: os.Path    => input
+              case input: os.RelPath => os.pwd / input
+              case input: os.SubPath => os.pwd / input
+          }
+          .filter(os.exists)
+          .map(inputPath => kodiak.cli.repl(Some(inputPath)))
+      end if
+    end if
+  end repl
 
   @main()
   def ast(

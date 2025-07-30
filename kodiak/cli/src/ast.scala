@@ -5,8 +5,9 @@ import scala.scalanative.libc.stdio.printf
 import kodiak.cli.util.unsafeToCString
 
 import fastparse.Parsed.{Success, Failure}
+import kodiak.parser.Parser
 
-def ast(inputFile: os.Path) = Zone {
+def ast(inputFile: os.Path) = Zone:
   printf(
     c"Welcome to Kodiak %s AST Parser!\n",
     kodiak.version.unsafeToCString,
@@ -16,13 +17,20 @@ def ast(inputFile: os.Path) = Zone {
 
   val content = os.read(inputFile)
 
-  // val parsedContent = parse(content, document) match
-  //   case Success(value, index) =>
-  //     "" // value
-  //   case f @ Failure(failureString, index, extra) =>
-  //     val trace = f.trace(enableLogging = true)
-  //     printf(c"%s\n", trace.longAggregateMsg.unsafeToCString)
-  //     "ERROR"
+  val parsedContent = Parser.parse(content, Parser.document) match
+    case Success(value, index) =>
+      Right(value)
+    case f @ Failure(failureString, index, extra) =>
+      val trace = f.trace(enableLogging = true)
+      printf(c"%s\n", trace.longAggregateMsg.unsafeToCString)
+      Left("ERROR")
 
-  // printf(c"%s\n", parsedContent.unsafeToCString)
-}
+  printf(
+    c"%s\n",
+    parsedContent match
+      case Right(ast)  => ast.toString.unsafeToCString
+      case Left(error) => error.unsafeToCString,
+  )
+
+  parsedContent
+end ast
