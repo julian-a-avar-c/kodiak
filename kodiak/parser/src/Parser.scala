@@ -18,11 +18,12 @@ object Parser:
 
   def document[$: P] = P:
     import KodiakWhitespace.given
-    (Start ~ exprs ~ End)
+    (Start ~ line.rep(min = 0) ~ End)
       .map(exprs => Ast.Document(exprs*))
 
-  def exprs[$: P] = P:
-    expr.rep(min = 0)
+  def line[$: P] = P:
+    import KodiakSinglelineWhitespace.given
+    expr ~ ("\n" | ";")
 
   def expr[$: P]: P[Ast.Expr] = P:
     import Expr.*
@@ -35,14 +36,16 @@ object Parser:
       NoCut(`var-definition`) |
       NoCut(`set-definition`) |
       NoCut(`let-definition`) |
-      NoCut(function) |
+      // NoCut(function) |
+      NoCut(`function-application`) |
       NoCut(collection) |
       NoCut(group) |
       `raw-number` |
       `raw-id` |
       `plain-text` |
       `raw-text` |
-      `function-application` |
+      // NoCut(`operator-application`) |
+      // `method-application` |
       `plain-id`
   end expr
 

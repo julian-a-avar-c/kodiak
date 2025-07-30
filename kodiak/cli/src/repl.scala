@@ -12,7 +12,7 @@ object chars:
   val CTRL_C = 3
   val ENTER  = 10
 
-def repl(inputFile: Option[os.Path]) = Zone {
+def repl(inputFile: Option[os.Path], printAst: Boolean) = Zone {
   printf(
     c"Welcome to Kodiak %s REPL!\n",
     kodiak.version.unsafeToCString,

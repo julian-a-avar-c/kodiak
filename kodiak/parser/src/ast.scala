@@ -6,16 +6,17 @@ object Ast:
   case class Document(value: Expr*) extends Ast
   sealed trait Expr                 extends Ast
 
-  case class Id(value: String)                                      extends Expr
-  object Unit                                                       extends Expr
-  sealed trait Boolean                                              extends Expr
-  sealed trait Number                                               extends Expr
-  sealed trait Text                                                 extends Expr
-  sealed trait Collection                                           extends Expr
-  case class Function(params: Ast.Collection, body: Expr)           extends Expr
-  sealed trait Control                                              extends Expr
-  sealed trait Definition                                           extends Expr
-  case class FunctionApplication(function: Expr, args: Collection*) extends Expr
+  case class Id(value: String)                            extends Expr
+  sealed trait Unit                                       extends Expr
+  object Unit                                             extends Unit
+  sealed trait Boolean                                    extends Expr
+  sealed trait Number                                     extends Expr
+  sealed trait Text                                       extends Expr
+  sealed trait Collection                                 extends Expr
+  case class Function(params: Ast.Collection, body: Expr) extends Expr
+  sealed trait Control                                    extends Expr
+  sealed trait Definition                                 extends Expr
+  sealed trait Application                                extends Expr
 
   case object True  extends Boolean
   case object False extends Boolean
@@ -52,4 +53,11 @@ object Ast:
   case class VarDefinition(lhs: Id, rhs: Expr) extends Definition
   case class SetDefinition(lhs: Id, rhs: Expr) extends Definition
   case class LetDefinition(lhs: Id, rhs: Expr) extends Definition
+
+  case class FunctionApplication(function: Expr, args: Collection*)
+      extends Application
+  case class MethodApplication(receiver: Expr, method: Id, args: Collection*)
+      extends Application
+  case class OperatorApplication(left: Expr, operator: Id, right: Expr)
+      extends Application
 end Ast

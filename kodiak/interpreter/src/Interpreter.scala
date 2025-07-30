@@ -1,9 +1,9 @@
 package kodiak.interpreter
 
 import kodiak.parser.ast.*
+import kodiak.parser.ast.Ast.*
 
-object Interpreter:
-  def evaluate(ast: Ast): Unit = Interpreter().evaluate(ast)
+object Interpreter extends Interpreter
 
 class Interpreter():
   val stack = scala.collection.mutable.ArrayStack.empty[Ast.Expr]
@@ -19,21 +19,20 @@ class Interpreter():
         function match
           case Ast.Id("printline") =>
             val firstArgGroup: Ast.Collection = args(0)
-            val firstArg: Ast.Expr            = firstArgGroup match
-              case Ast.Tuple(exprs*)    => exprs(0)
-              case Ast.Sequence(exprs*) => exprs(0)
-              case Ast.Set(exprs*)      => exprs(0)
-            firstArg match
-              case Ast.PlainText(value) =>
-                printf(value)
-                Ast.Unit
-              case _ => ???
-            end match
+            printline(firstArgGroup)
+          case _ => ???
+      case Ast.MethodApplication(receiver, method, args*) => ???
+      case Ast.OperatorApplication(left, op, right)       =>
+        (left, op, right) match
+          case (Ast.Integer(leftValue), Ast.Id("+"), Ast.Integer(rightValue)) =>
+            Ast.Integer(leftValue + rightValue)
+          case (Ast.Decimal(leftValue), Ast.Id("+"), Ast.Decimal(rightValue)) =>
+            Ast.Decimal(leftValue + rightValue)
           case _ => ???
       case Ast.Unit                           => Ast.Unit
       case Ast.True                           => ???
       case Ast.False                          => ???
-      case Ast.Integer(value)                 => ???
+      case _: Ast.Integer                     => ast
       case Ast.Decimal(value)                 => ???
       case Ast.RawNumber(value, interpolator) => ???
       case Ast.PlainText(value)               => ???
@@ -58,32 +57,47 @@ class Interpreter():
     end match
   end evaluate
 
-  def show(ast: Ast): String =
-    ast match
-      case Ast.Document(value*)                     => ???
-      case Ast.Id(value)                            => ???
-      case Ast.Unit                                 => ???
-      case Ast.Function(params, body)               => ???
-      case Ast.FunctionApplication(function, args*) => ???
-      case Ast.True                                 => "true"
-      case Ast.False                                => "false"
-      case Ast.Integer(value)                       => ???
-      case Ast.Decimal(value)                       => ???
-      case Ast.RawNumber(value, interpolator)       => ???
-      case Ast.PlainText(value)                     => value
-      case Ast.RawText(interpolator, value)         => ???
-      case Ast.Tuple(exprs*)                        =>
-        exprs.map(show).mkString("(", ", ", ")")
-      case Ast.Sequence(exprs*)                      => ???
-      case Ast.Set(exprs*)                           => ???
-      case Ast.If(condition, thenBranch, elseBranch) => ???
-      case Ast.Match(selector, patterns*)            => ???
-      case Ast.Match.ElsePattern(body)               => ???
-      case Ast.While(condition, body)                => ???
-      case Ast.For(generators, body)                 => ???
-      case Ast.For.Generator(lhs, rhs)               => ???
-      case Ast.ValDefinition(lhs, rhs)               => ???
-      case Ast.VarDefinition(lhs, rhs)               => ???
-      case Ast.SetDefinition(lhs, rhs)               => ???
-      case Ast.LetDefinition(lhs, rhs)               => ???
+  def show(expr: Ast.Expr): String =
+    expr match
+      case Ast.Id(value)                                  => ???
+      case Ast.Unit                                       => ???
+      case Ast.Function(params, body)                     => ???
+      case Ast.True                                       => "true"
+      case Ast.False                                      => "false"
+      case Ast.Integer(value)                             => value.toString
+      case Ast.Decimal(value)                             => value.toString
+      case Ast.RawNumber(value, interpolator)             => ???
+      case Ast.PlainText(value)                           => value
+      case Ast.RawText(interpolator, value)               => ???
+      case Ast.Tuple(exprs*)                              => ???
+      case Ast.Sequence(exprs*)                           => ???
+      case Ast.Set(exprs*)                                => ???
+      case Ast.If(condition, thenBranch, elseBranch)      => ???
+      case Ast.Match(selector, patterns*)                 => ???
+      case Ast.While(condition, body)                     => ???
+      case Ast.For(generators, body)                      => ???
+      case Ast.ValDefinition(lhs, rhs)                    => ???
+      case Ast.VarDefinition(lhs, rhs)                    => ???
+      case Ast.SetDefinition(lhs, rhs)                    => ???
+      case Ast.LetDefinition(lhs, rhs)                    => ???
+      case Ast.FunctionApplication(function, args*)       => ???
+      case Ast.MethodApplication(receiver, method, args*) => ???
+      case Ast.OperatorApplication(left, operator, right) => ???
+    end match
+  end show
+
+  def printline(collection: Ast.Collection): Ast.Unit =
+    def toString(exprs: Seq[Ast.Expr])(start: String, end: String): String =
+      if exprs.length == 1 then show(exprs.head)
+      else s"${start}${exprs.map(show).mkString(", ")}${end}"
+    val joinedCollection = collection match
+      case Ast.Tuple(exprs*) =>
+        toString(exprs)("(", ")")
+      case Ast.Sequence(exprs*) =>
+        toString(exprs)("[", "]")
+      case Ast.Set(exprs*) =>
+        toString(exprs)("{", "}")
+    println(joinedCollection)
+    Ast.Unit
+  end printline
 end Interpreter

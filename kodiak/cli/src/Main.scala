@@ -1,6 +1,6 @@
 package kodiak.cli
 
-import mainargs.{main, arg, ParserForMethods}
+import mainargs.{main, arg, ParserForMethods, Flag}
 
 import kodiak.cli.util.unsafeWrapArray
 import kodiak.cli.util.rawMode
@@ -12,31 +12,33 @@ object Main:
 
   @main()
   def repl(
-      @arg(positional = true)
+      @arg()
+      ast: Flag,
+      @arg()
       input: Option[String],
       @arg(short = 'i')
-      interactive: Option[Boolean],
+      interactive: Flag,
   ) =
-    if interactive.contains(true) then {}
+    if interactive.value then {}
     else
-      if input.isEmpty then kodiak.cli.repl(None)
+      if input.isEmpty
+      then kodiak.cli.repl(None, ast.value)
       else
         input
-          .map { input =>
+          .map: input =>
             os.FilePath(input) match
               case input: os.Path    => input
               case input: os.RelPath => os.pwd / input
               case input: os.SubPath => os.pwd / input
-          }
           .filter(os.exists)
-          .map(inputPath => kodiak.cli.repl(Some(inputPath)))
+          .map(inputPath => kodiak.cli.repl(Some(inputPath), ast.value))
       end if
     end if
   end repl
 
   @main()
   def ast(
-      @arg(positional = true)
+      @arg()
       input: Option[String],
       @arg(short = 'i')
       interactive: Option[Boolean],

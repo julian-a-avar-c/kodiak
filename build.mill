@@ -55,46 +55,47 @@ trait SharedPlatformNativeModule
 // ----------------------------------------------------------------------------
 
 object kodiak extends Module:
-  object core extends Module:
-    trait CoreModule extends SharedPlatformModule
-    object jvm       extends CoreModule, SharedPlatformModule
-    object native    extends CoreModule, SharedPlatformNativeModule
-  end core
+  trait CoreModule extends SharedPlatformModule
 
-  object cli extends SharedNativeModule:
+  trait CliModule extends SharedNativeModule:
     def moduleDeps = Seq(kodiak.core.native, parser.native, interpreter.native)
     def mvnDeps    = Seq(Deps.`os-lib`, Deps.`mainargs`)
-  end cli
+  end CliModule
+
+  trait CompilerModule extends SharedPlatformModule
+
+  trait InterpreterModule extends SharedPlatformModule:
+    def mvnDeps = Seq(Deps.`os-lib`)
+
+  trait ParserModule extends SharedPlatformModule:
+    def moduleDeps = Seq(kodiak.core.jvm)
+    def mvnDeps    = Seq(Deps.fastparse)
+
+  // --------------------------------------------------------------------------
+
+  object core extends Module:
+    object jvm    extends CoreModule, SharedPlatformModule
+    object native extends CoreModule, SharedPlatformNativeModule
+
+  object cli extends CliModule
 
   object compiler extends Module:
-    trait CompilerModule extends SharedPlatformModule
-
     object jvm extends CompilerModule, SharedPlatformModule:
       def moduleDeps = Seq(parser.jvm)
-
     object native extends CompilerModule, SharedPlatformNativeModule:
       def moduleDeps = Seq(parser.native)
   end compiler
 
   object interpreter extends Module:
-    trait InterpreterModule extends SharedPlatformModule:
-      def mvnDeps = Seq(Deps.`os-lib`)
-
     object jvm extends InterpreterModule, SharedPlatformModule:
       def moduleDeps = Seq(kodiak.core.jvm, parser.jvm)
-
     object native extends InterpreterModule, SharedPlatformNativeModule:
       def moduleDeps = Seq(kodiak.core.native, parser.native)
   end interpreter
 
   object parser extends Module:
-    trait ParserModule extends SharedPlatformModule:
-      def moduleDeps = Seq(kodiak.core.jvm)
-      def mvnDeps    = Seq(Deps.fastparse)
-
     object jvm extends ParserModule, SharedPlatformModule:
       object test extends ScalaTests, SharedTestModule
-
     object native extends ParserModule, SharedPlatformNativeModule:
       object test extends ScalaNativeTests, SharedTestModule
   end parser

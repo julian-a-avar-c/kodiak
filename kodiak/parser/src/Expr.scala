@@ -7,18 +7,7 @@ import kodiak.parser.ast.Ast
 
 import Parser.expr
 
-import Terminal.{
-  DIGIT,
-  DIGITS,
-  WORD,
-  ID,
-  RAW_BLOCK,
-  `true`,
-  `false`,
-  SIGN,
-  TEXT_BLOCK,
-  TEXT_WORD,
-}
+import Terminal.*
 
 object Expr:
   sealed trait Collection[T](open: String, close: String):
@@ -134,5 +123,21 @@ object Expr:
     (Literal.id ~ `arg-groups`)
       .map((function, args) => Ast.FunctionApplication(function, args*))
   end `function-application`
+
+  def `method-application`[$: P]: P[Ast.MethodApplication] = P:
+    import KodiakWhitespace.given
+    (expr ~ "." ~/ Literal.id ~ `group-collection`.rep(min = 1))
+      .map((receiver, method, args) =>
+        Ast.MethodApplication(receiver, method, args*),
+      )
+  end `method-application`
+
+  def `operator-application`[$: P]: P[Ast.OperatorApplication] = P:
+    import KodiakWhitespace.given
+    (expr ~ &(" ") ~/ Literal.id ~ &(" ") ~ expr)
+      .map((left, operator, right) =>
+        Ast.OperatorApplication(left, operator, right),
+      )
+  end `operator-application`
 
 end Expr
