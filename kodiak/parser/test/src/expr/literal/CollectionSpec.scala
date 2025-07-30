@@ -1,5 +1,6 @@
 package kodiak.parser
 package expr
+package literal
 
 import kodiak.parser.ast.*
 
@@ -11,8 +12,8 @@ class CollectionSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.collection)
-    assertParse(input, expected, Expr.tuple)
+    assertParse(input, expected, Literal.collection)
+    assertParse(input, expected, Literal.tuple)
   }
 
   it should "parse a single item tuple" in {
@@ -21,8 +22,8 @@ class CollectionSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.collection)
-    assertParse(input, expected, Expr.tuple)
+    assertParse(input, expected, Literal.collection)
+    assertParse(input, expected, Literal.tuple)
   }
 
   it should "parse a multi item tuple" in {
@@ -31,8 +32,8 @@ class CollectionSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.collection)
-    assertParse(input, expected, Expr.tuple)
+    assertParse(input, expected, Literal.collection)
+    assertParse(input, expected, Literal.tuple)
   }
 
   // --------------------------------------------------------------------------
@@ -43,8 +44,8 @@ class CollectionSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.collection)
-    assertParse(input, expected, Expr.sequence)
+    assertParse(input, expected, Literal.collection)
+    assertParse(input, expected, Literal.sequence)
   }
 
   it should "parse a single item sequence" in {
@@ -53,8 +54,8 @@ class CollectionSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.collection)
-    assertParse(input, expected, Expr.sequence)
+    assertParse(input, expected, Literal.collection)
+    assertParse(input, expected, Literal.sequence)
   }
 
   it should "parse a multi item sequence" in {
@@ -63,8 +64,8 @@ class CollectionSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.collection)
-    assertParse(input, expected, Expr.sequence)
+    assertParse(input, expected, Literal.collection)
+    assertParse(input, expected, Literal.sequence)
   }
 
   // --------------------------------------------------------------------------
@@ -75,8 +76,8 @@ class CollectionSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.collection)
-    assertParse(input, expected, Expr.set)
+    assertParse(input, expected, Literal.collection)
+    assertParse(input, expected, Literal.set)
   }
 
   it should "parse a single item set" in {
@@ -85,8 +86,8 @@ class CollectionSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.collection)
-    assertParse(input, expected, Expr.set)
+    assertParse(input, expected, Literal.collection)
+    assertParse(input, expected, Literal.set)
   }
 
   it should "parse a multi item set" in {
@@ -95,8 +96,8 @@ class CollectionSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.collection)
-    assertParse(input, expected, Expr.set)
+    assertParse(input, expected, Literal.collection)
+    assertParse(input, expected, Literal.set)
   }
 
 end CollectionSpec

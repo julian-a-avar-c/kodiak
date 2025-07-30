@@ -23,17 +23,19 @@ object Parser:
 
   def expr[$: P] = P:
     import Expr.*
+    import Literal.*
 
     boolean |
       number |
       NoCut(control) |
       NoCut(collection) |
       NoCut(group) |
-      text |
       `raw-number` |
       `raw-id` |
+      `plain-text` |
+      `raw-text` |
       `function-application` |
-      `natural-id`
+      `plain-id`
   end expr
 
   def keyword[$: P](value: String) = P(value ~~ !ID)(using value, summon)

@@ -5,8 +5,26 @@ import kodiak.parser.ast.*
 
 class ExprSpec extends ParserSpec:
 
-  "Kodiak's expression parser" should "parse a group" in {
+  "Kodiak's expression parser" should "parse a tuple-group" in {
     val input    = "(42)"
+    val expected = Ast.Integer(42)
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.group)
+  }
+
+  "Kodiak's expression parser" should "parse a sequence-group" in {
+    val input    = "[42]"
+    val expected = Ast.Integer(42)
+
+    assertParse(input, Ast.Document(expected), Parser.document)
+    assertParse(input, expected, Parser.expr)
+    assertParse(input, expected, Expr.group)
+  }
+
+  "Kodiak's expression parser" should "parse a set-group" in {
+    val input    = "{42}"
     val expected = Ast.Integer(42)
 
     assertParse(input, Ast.Document(expected), Parser.document)
@@ -22,8 +40,8 @@ class ExprSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.id)
-    assertParse(input, expected, Expr.`natural-id`)
+    assertParse(input, expected, Literal.id)
+    assertParse(input, expected, Literal.`plain-id`)
   }
 
   it should "parse an id word" in {
@@ -32,8 +50,8 @@ class ExprSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.id)
-    assertParse(input, expected, Expr.`raw-id`)
+    assertParse(input, expected, Literal.id)
+    assertParse(input, expected, Literal.`raw-id`)
   }
 
   it should "parse a parenthesized id block" in {
@@ -42,8 +60,8 @@ class ExprSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.id)
-    assertParse(input, expected, Expr.`raw-id`)
+    assertParse(input, expected, Literal.id)
+    assertParse(input, expected, Literal.`raw-id`)
   }
 
   it should "parse a square bracket id block" in {
@@ -52,8 +70,8 @@ class ExprSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.id)
-    assertParse(input, expected, Expr.`raw-id`)
+    assertParse(input, expected, Literal.id)
+    assertParse(input, expected, Literal.`raw-id`)
   }
 
   it should "parse a curly bracket id block" in {
@@ -62,8 +80,8 @@ class ExprSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.id)
-    assertParse(input, expected, Expr.`raw-id`)
+    assertParse(input, expected, Literal.id)
+    assertParse(input, expected, Literal.`raw-id`)
   }
 
 end ExprSpec

@@ -7,12 +7,22 @@ import kodiak.parser.ast.Ast
 
 import Parser.expr
 
-import Terminal.{DIGIT, DIGITS, WORD, ID, RAW_BLOCK, `true`, `false`, SIGN}
+import Terminal.{
+  DIGIT,
+  DIGITS,
+  WORD,
+  ID,
+  RAW_BLOCK,
+  `true`,
+  `false`,
+  SIGN,
+  TEXT_BLOCK,
+  TEXT_WORD,
+}
 
-object Expr:
-
+object Literal:
   def id[$: P]: P[Ast.Id] = P:
-    NoCut(`raw-id`) | `natural-id`
+    NoCut(`raw-id`) | `plain-id`
 
   def boolean[$: P]: P[Ast.Boolean] = P:
     `true` | `false`
@@ -30,17 +40,6 @@ object Expr:
         Ast.Decimal(sign.getOrElse(1) * (integral + "." + decimal).toDouble),
       )
 
-  def `natural-id`[$: P]: P[Ast.Id] = P:
-    ((!DIGIT ~~ ID) ~~ ID.repX(min = 0)).!.map(value => Ast.Id(value))
-
-  def `raw-id`[$: P]: P[Ast.Id] = P:
-    def `word-id`[$: P] = P:
-      ("`" ~~/ WORD)
-    def `block-id`[$: P] = P:
-      ("`" ~~/ RAW_BLOCK)
-    (NoCut(`block-id`) | `word-id`)
-      .map(value => Ast.Id(value))
-
   def `raw-number`[$: P]: P[Ast.RawNumber] = P:
     def `number-word`[$: P]: P[Ast.RawNumber] = P:
       (id ~~ "#" ~~/ WORD)
@@ -50,17 +49,52 @@ object Expr:
         .map((interpolator, value) => Ast.RawNumber(value, interpolator))
     NoCut(`number-block`) | `number-word`
 
-  def text[$: P]: P[Ast.Text] = P:
-    def `text-word`[$: P] = P:
-      ("\"" ~~/ WORD)
-    def `text-block`[$: P] = P:
-      ("\"" ~~/ RAW_BLOCK)
+  def `plain-text`[$: P] = P:
+    (NoCut(TEXT_BLOCK) | TEXT_WORD)
+      .map((value) => Ast.PlainText(value))
 
-    (NoCut(`text-block`) | `text-word`)
-      .map((value) => Ast.Text(value))
+  def `raw-text`[$: P] = P:
+    (id ~~ (NoCut(TEXT_BLOCK) | TEXT_WORD))
+      .map((interpolator, value) => Ast.RawText(interpolator, value))
+
+  def `plain-id`[$: P]: P[Ast.Id] = P:
+    ((!DIGIT ~~ ID) ~~ ID.repX(min = 0)).!.map(value => Ast.Id(value))
+
+  def `raw-id`[$: P]: P[Ast.Id] = P:
+    def `raw-word-id`[$: P] = P:
+      ("`" ~~/ WORD)
+    def `raw-block-id`[$: P] = P:
+      ("`" ~~/ RAW_BLOCK)
+    (NoCut(`raw-block-id`) | `raw-word-id`)
+      .map(value => Ast.Id(value))
 
   // ------------------------------------------------------------------------
 
+  def collection[$: P]: P[Ast.Collection] = P:
+    NoCut(tuple) | NoCut(sequence) | set
+
+  def tuple[$: P]: P[Ast.Tuple] = P:
+    Expr
+      .ItemCollection("(", ")")
+      .parse
+      .map(exprs => Ast.Tuple(exprs*))
+
+  def sequence[$: P]: P[Ast.Sequence] = P:
+    Expr
+      .ItemCollection("[", "]")
+      .parse
+      .map(exprs => Ast.Sequence(exprs*))
+
+  def set[$: P]: P[Ast.Set] = P:
+    Expr
+      .ItemCollection("{", "}")
+      .parse
+      .map(exprs => Ast.Set(exprs*))
+end Literal
+
+// ----------------------------------------------------------------------------
+
+object Expr:
   sealed trait Collection[T](open: String, close: String):
     import KodiakWhitespace.given
     def empty[$: P]: P[Unit] = P:
@@ -104,22 +138,7 @@ object Expr:
       Group("[", "]").parse |
       Group("{", "}").parse
 
-  def collection[$: P]: P[Ast.Collection] = P:
-    NoCut(tuple) | NoCut(sequence) | set
-
-  def tuple[$: P]: P[Ast.Tuple] = P:
-    ItemCollection("(", ")").parse
-      .map(exprs => Ast.Tuple(exprs*))
-
-  def sequence[$: P]: P[Ast.Sequence] = P:
-    ItemCollection("[", "]").parse
-      .map(exprs => Ast.Sequence(exprs*))
-
-  def set[$: P]: P[Ast.Set] = P:
-    ItemCollection("{", "}").parse
-      .map(exprs => Ast.Set(exprs*))
-
-  // ------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
 
   def control[$: P]: P[Ast.Control] = P:
     NoCut(`if`) | NoCut(`match`) | NoCut(`while`) | `for`
@@ -152,7 +171,7 @@ object Expr:
   def `for`[$: P]: P[Ast.For] = P:
     import KodiakWhitespace.given
     def generator[$: P]: P[Ast.For.Generator] = P:
-      ("let" ~/ id ~ "=" ~ expr)
+      ("let" ~/ Literal.id ~ "=" ~ expr)
         .map((id, value) => Ast.For.Generator(id, value))
     ("for" ~/ generator ~ "do" ~ expr)
       .map((generator, body) => Ast.For(Seq(generator), body))
@@ -164,7 +183,7 @@ object Expr:
     import KodiakWhitespace.given
     def `arg-groups`[$: P]: P[Seq[Ast.Collection]] = P:
       `group-collection`.rep(min = 1)
-    (id ~ `arg-groups`)
+    (Literal.id ~ `arg-groups`)
       .map((function, args) => Ast.FunctionApplication(function, args*))
   end `function-application`
 

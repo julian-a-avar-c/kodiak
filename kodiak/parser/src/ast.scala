@@ -9,7 +9,7 @@ object Ast:
   case class Id(value: String)                                      extends Expr
   sealed trait Boolean                                              extends Expr
   sealed trait Number                                               extends Expr
-  case class Text(value: String)                                    extends Expr
+  sealed trait Text                                                 extends Expr
   sealed trait Collection                                           extends Expr
   sealed trait Control                                              extends Expr
   case class FunctionApplication(function: Expr, args: Collection*) extends Expr
@@ -20,6 +20,9 @@ object Ast:
   case class Integer(value: Int)                        extends Number
   case class Decimal(value: Double)                     extends Number
   case class RawNumber(value: String, interpolator: Id) extends Number
+
+  case class PlainText(value: String)                 extends Text
+  case class RawText(interpolator: Id, value: String) extends Text
 
   case class Tuple(exprs: Expr*)    extends Collection
   case class Sequence(exprs: Expr*) extends Collection

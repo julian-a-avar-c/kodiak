@@ -43,4 +43,9 @@ object Terminal:
     inline val separators    = ":;,./"
     inline val whitespace    = " \t\n\r"
     !CharIn(grouping + interpolators + separators + whitespace) ~~ AnyChar
+
+  def TEXT_BLOCK[$: P] = P:
+    ("\"" ~~/ RAW_BLOCK)
+  def TEXT_WORD[$: P] = P:
+    ("\"" ~~/ WORD)
 end Terminal

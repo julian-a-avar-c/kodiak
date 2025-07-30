@@ -1,5 +1,6 @@
 package kodiak.parser
 package expr
+package literal
 
 import kodiak.parser.ast.*
 
@@ -13,7 +14,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`decimal`)
+    assertParse(input, expected, Literal.`decimal`)
   }
 
   it should "parse a grouped decimal" in {
@@ -22,7 +23,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`decimal`)
+    assertParse(input, expected, Literal.`decimal`)
   }
 
   it should "parse a negative decimal" in {
@@ -31,7 +32,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`decimal`)
+    assertParse(input, expected, Literal.`decimal`)
   }
 
   it should "parse a positive decimal" in {
@@ -40,7 +41,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`decimal`)
+    assertParse(input, expected, Literal.`decimal`)
   }
 
   it should "parse a negative grouped decimal" in {
@@ -49,7 +50,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`decimal`)
+    assertParse(input, expected, Literal.`decimal`)
   }
 
   it should "parse a positive grouped decimal" in {
@@ -58,7 +59,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`decimal`)
+    assertParse(input, expected, Literal.`decimal`)
   }
 
   // --------------------------------------------------------------------------
@@ -69,7 +70,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`integer`)
+    assertParse(input, expected, Literal.`integer`)
   }
 
   it should "parse a grouped integer" in {
@@ -78,7 +79,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`integer`)
+    assertParse(input, expected, Literal.`integer`)
   }
 
   it should "parse a negative integer" in {
@@ -87,7 +88,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`integer`)
+    assertParse(input, expected, Literal.`integer`)
   }
 
   it should "parse a positive integer" in {
@@ -96,7 +97,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`integer`)
+    assertParse(input, expected, Literal.`integer`)
   }
 
   it should "parse a negative grouped integer" in {
@@ -105,7 +106,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`integer`)
+    assertParse(input, expected, Literal.`integer`)
   }
 
   it should "parse a positive grouped integer" in {
@@ -114,7 +115,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`integer`)
+    assertParse(input, expected, Literal.`integer`)
   }
 
   // --------------------------------------------------------------------------
@@ -125,7 +126,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`raw-number`)
+    assertParse(input, expected, Literal.`raw-number`)
   }
 
   it should "parse a parenthesized number block" in {
@@ -134,7 +135,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`raw-number`)
+    assertParse(input, expected, Literal.`raw-number`)
   }
 
   it should "parse a square bracketed number block" in {
@@ -143,7 +144,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`raw-number`)
+    assertParse(input, expected, Literal.`raw-number`)
   }
 
   it should "parse a curly bracketed number block" in {
@@ -152,7 +153,7 @@ class NumberSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.`raw-number`)
+    assertParse(input, expected, Literal.`raw-number`)
   }
 
 end NumberSpec
