@@ -21,8 +21,8 @@ class Interpreter():
             val firstArgGroup: Ast.Collection = args(0)
             printline(firstArgGroup)
           case _ => ???
-      case Ast.MethodApplication(receiver, method, args*) => ???
-      case Ast.OperatorApplication(left, op, right)       =>
+      case Ast.PathApplication(receiver, paths*)    => ???
+      case Ast.OperatorApplication(left, op, right) =>
         (left, op, right) match
           case (Ast.Integer(leftValue), Ast.Id("+"), Ast.Integer(rightValue)) =>
             Ast.Integer(leftValue + rightValue)
@@ -81,12 +81,12 @@ class Interpreter():
       case Ast.SetDefinition(lhs, rhs)                    => ???
       case Ast.LetDefinition(lhs, rhs)                    => ???
       case Ast.FunctionApplication(function, args*)       => ???
-      case Ast.MethodApplication(receiver, method, args*) => ???
+      case Ast.PathApplication(receiver, paths*)          => ???
       case Ast.OperatorApplication(left, operator, right) => ???
     end match
   end show
 
-  def printline(collection: Ast.Collection): Ast.Unit =
+  def printline(collection: Ast.Collection): Ast.Unit.type =
     def toString(exprs: Seq[Ast.Expr])(start: String, end: String): String =
       if exprs.length == 1 then show(exprs.head)
       else s"${start}${exprs.map(show).mkString(", ")}${end}"

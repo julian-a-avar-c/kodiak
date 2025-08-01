@@ -6,13 +6,13 @@ import kodiak.parser.ast.*
 
 class TextSpec extends ParserSpec:
 
-  "Kodiak's text parser" should "parse text word" in {
+  "Kodiak's text parser" should "parse a plain text word" in {
     val input    = "\"hello"
     val expected = Ast.PlainText("hello")
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Literal.`plain-text`)
+    assertParse(input, expected, Literal.text)
   }
 
   it should "parse text tuple-block" in {
@@ -21,7 +21,7 @@ class TextSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Literal.`plain-text`)
+    assertParse(input, expected, Literal.text)
   }
 
   it should "parse text sequence-block" in {
@@ -30,7 +30,7 @@ class TextSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Literal.`plain-text`)
+    assertParse(input, expected, Literal.text)
   }
 
   it should "parse text set-block" in {
@@ -39,10 +39,10 @@ class TextSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Literal.`plain-text`)
+    assertParse(input, expected, Literal.text)
   }
 
-  it should "parse interpolated text tuple-block" in {
+  it should "parse raw text tuple-block" in {
     val input    = "raw\"(hello)"
     val expected = Ast.RawText(Ast.Id("raw"), "hello")
 
@@ -51,7 +51,7 @@ class TextSpec extends ParserSpec:
     assertParse(input, expected, Literal.`raw-text`)
   }
 
-  it should "parse interpolated text sequence-block" in {
+  it should "parse raw text sequence-block" in {
     val input    = "raw\"[hello]"
     val expected = Ast.RawText(Ast.Id("raw"), "hello")
 
@@ -60,7 +60,7 @@ class TextSpec extends ParserSpec:
     assertParse(input, expected, Literal.`raw-text`)
   }
 
-  it should "parse interpolated text set-block" in {
+  it should "parse raw text set-block" in {
     val input    = "raw\"{hello}"
     val expected = Ast.RawText(Ast.Id("raw"), "hello")
 

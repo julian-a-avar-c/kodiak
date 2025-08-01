@@ -3,12 +3,35 @@ package ast
 
 sealed trait Ast
 object Ast:
-  case class Document(value: Expr*) extends Ast
-  sealed trait Expr                 extends Ast
+  sealed trait Keyword(value: String) extends Ast
+  case class Document(value: Expr*)   extends Ast
+  sealed trait Comment                extends Ast
+  sealed trait Expr                   extends Ast
+
+  object Keyword:
+    case object `val`   extends Keyword("val")
+    case object `var`   extends Keyword("var")
+    case object set     extends Keyword("set")
+    case object let     extends Keyword("let")
+    case object `if`    extends Keyword("if")
+    case object `then`  extends Keyword("then")
+    case object `else`  extends Keyword("else")
+    case object `for`   extends Keyword("for")
+    case object `while` extends Keyword("while")
+    case object `do`    extends Keyword("do")
+    case object `yield` extends Keyword("yield")
+    case object `null`  extends Keyword("null")
+    case object `this`  extends Keyword("this")
+  end Keyword
+
+  case class SinglelineComment(value: String) extends Comment
+  case class MultilineComment(
+      head: String,
+      tail: Seq[(MultilineComment, String)],
+  ) extends Comment
 
   case class Id(value: String)                            extends Expr
-  sealed trait Unit                                       extends Expr
-  object Unit                                             extends Unit
+  object Unit                                             extends Expr
   sealed trait Boolean                                    extends Expr
   sealed trait Number                                     extends Expr
   sealed trait Text                                       extends Expr
@@ -54,10 +77,9 @@ object Ast:
   case class SetDefinition(lhs: Id, rhs: Expr) extends Definition
   case class LetDefinition(lhs: Id, rhs: Expr) extends Definition
 
-  case class FunctionApplication(function: Expr, args: Collection*)
+  case class FunctionApplication(function: Expr, argGroups: Collection*)
       extends Application
-  case class MethodApplication(receiver: Expr, method: Id, args: Collection*)
-      extends Application
+  case class PathApplication(receiver: Expr, paths: Id*) extends Application
   case class OperatorApplication(left: Expr, operator: Id, right: Expr)
       extends Application
 end Ast

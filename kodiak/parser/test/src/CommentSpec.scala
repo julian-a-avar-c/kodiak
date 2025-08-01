@@ -10,6 +10,7 @@ class CommentSpec extends ParserSpec:
     val expected = Ast.Document()
 
     assertParse(input, expected, Parser.document)
+    // assertParse(input, " Hello, World!", Parser.SINGLELINE_COMMENT)
   }
 
   it should "parse a single multiline comment" in {

@@ -6,14 +6,12 @@ import org.scalactic.source.Position
 import org.scalactic.Prettifier
 import kodiak.parser.UnitSpec
 
-import kodiak.parser.ast.Ast
-
 abstract class ParserSpec extends UnitSpec:
 
-  inline def assertParse[A <: Ast](
+  inline def assertParse[A](
       input: String,
       expected: A,
-      parser: ParsingRun[Any] ?=> ParsingRun[A],
+      parser: ParsingRun[?] ?=> ParsingRun[A],
   )(using
       prettifier: Prettifier,
       pos: Position,

@@ -95,7 +95,8 @@ object kodiak extends Module:
 
   object parser extends Module:
     object jvm extends ParserModule, SharedPlatformModule:
-      object test extends ScalaTests, SharedTestModule
+      object test extends ScalaTests, SharedTestModule:
+        def testParallelism = false // For debugging
     object native extends ParserModule, SharedPlatformNativeModule:
       object test extends ScalaNativeTests, SharedTestModule
   end parser

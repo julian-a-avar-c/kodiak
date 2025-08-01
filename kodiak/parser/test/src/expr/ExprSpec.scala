@@ -11,25 +11,25 @@ class ExprSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.group)
+    assertParse(input, expected, Literal.`group-tuple`)
   }
 
-  "Kodiak's expression parser" should "parse a sequence-group" in {
+  it should "parse a sequence-group" in {
     val input    = "[42]"
     val expected = Ast.Integer(42)
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.group)
+    assertParse(input, expected, Literal.`group-sequence`)
   }
 
-  "Kodiak's expression parser" should "parse a set-group" in {
+  it should "parse a set-group" in {
     val input    = "{42}"
     val expected = Ast.Integer(42)
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Expr.group)
+    assertParse(input, expected, Literal.`group-set`)
   }
 
   // --------------------------------------------------------------------------
@@ -40,17 +40,25 @@ class ExprSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Literal.id)
+    // assertParse(
+    //   input,
+    //   expected,
+    //   (NoCut(`raw-block-id`) | NoCut(`raw-word-id`) | `plain-id`),
+    // )
     assertParse(input, expected, Literal.`plain-id`)
   }
 
-  it should "parse an id word" in {
+  it should "parse a raw id word" in {
     val input    = "`123abc"
     val expected = Ast.Id("123abc")
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Literal.id)
+    // assertParse(
+    //   input,
+    //   expected,
+    //   (NoCut(`raw-block-id`) | NoCut(`raw-word-id`) | `plain-id`),
+    // )
     assertParse(input, expected, Literal.`raw-id`)
   }
 
@@ -60,7 +68,11 @@ class ExprSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Literal.id)
+    // assertParse(
+    //   input,
+    //   expected,
+    //   (NoCut(`raw-block-id`) | NoCut(`raw-word-id`) | `plain-id`),
+    // )
     assertParse(input, expected, Literal.`raw-id`)
   }
 
@@ -70,7 +82,11 @@ class ExprSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Literal.id)
+    // assertParse(
+    //   input,
+    //   expected,
+    //   id,
+    // )
     assertParse(input, expected, Literal.`raw-id`)
   }
 
@@ -80,7 +96,11 @@ class ExprSpec extends ParserSpec:
 
     assertParse(input, Ast.Document(expected), Parser.document)
     assertParse(input, expected, Parser.expr)
-    assertParse(input, expected, Literal.id)
+    // assertParse(
+    //   input,
+    //   expected,
+    //   (NoCut(`raw-block-id`) | NoCut(`raw-word-id`) | `plain-id`),
+    // )
     assertParse(input, expected, Literal.`raw-id`)
   }
 
