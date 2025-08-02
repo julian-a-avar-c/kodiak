@@ -1,17 +1,19 @@
 package kodiak.parser
 
-import fastparse.ParsingRun
+import fastparse.*
 import fastparse.Parsed.{Success, Failure}
 import org.scalactic.source.Position
 import org.scalactic.Prettifier
-import kodiak.parser.UnitSpec
+import org.scalatest.flatspec.*
+
+abstract class UnitSpec extends AnyFlatSpec
 
 abstract class ParserSpec extends UnitSpec:
 
   inline def assertParse[A](
       input: String,
       expected: A,
-      parser: ParsingRun[?] ?=> ParsingRun[A],
+      parser: P[?] ?=> P[A],
   )(using
       prettifier: Prettifier,
       pos: Position,

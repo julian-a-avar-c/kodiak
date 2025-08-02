@@ -4,9 +4,7 @@ import scala.annotation.tailrec
 
 import fastparse.*
 
-import kodiak.parser.ast.Ast
-
-object KodiakWhitespace:
+object Whitespace:
   import fastparse.internal.{Msgs, Util}
 
   inline def exitAndReport(ctx: ParsingRun[?])(index: Int) =
@@ -136,7 +134,8 @@ object KodiakWhitespace:
     )
   end multiline0
 
-  given multiline: Whitespace = ctx ?=> Terminal.WS ~~ multiline0(ctx)
+  given multiline: Whitespace = ctx ?=>
+    CharIn(" ", "\t", "\n", "\r") ~~ multiline0(ctx)
 
   given singleline: Whitespace = ctx =>
     val input = ctx.input
@@ -247,13 +246,6 @@ object KodiakWhitespace:
     )
   end singleline
 
-  inline def exitAndReportComment(ctx: ParsingRun[?])(
-      index: Int,
-  ): P[Ast.MultilineComment] =
-    if ctx.verboseFailures then ctx.reportTerminalMsg(index, Msgs.empty)
-    ctx.freshSuccess(Ast.MultilineComment(???, ???), index)
-  end exitAndReportComment
-
   def unreachable(
       ctx: ParsingRun[?],
   )(index: Int, state: State, nesting: Int): ParsingRun[Unit] =
@@ -271,4 +263,4 @@ object KodiakWhitespace:
       res
     end if
   end unreachable
-end KodiakWhitespace
+end Whitespace
