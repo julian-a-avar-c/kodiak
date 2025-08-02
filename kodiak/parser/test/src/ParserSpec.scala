@@ -4,9 +4,9 @@ import fastparse.*
 import fastparse.Parsed.{Success, Failure}
 import org.scalactic.source.Position
 import org.scalactic.Prettifier
-import org.scalatest.flatspec.*
+import org.scalatest.funsuite.*
 
-abstract class UnitSpec extends AnyFlatSpec
+abstract class UnitSpec extends AnyFunSuite
 
 abstract class ParserSpec extends UnitSpec:
 

@@ -1,15 +1,14 @@
 package kodiak.parser
 
-import fastparse.ParsingRun
-import fastparse.Parsed.{Success, Failure}
-import org.scalactic.source.Position
-import org.scalactic.Prettifier
-import kodiak.parser.UnitSpec
+import kodiak.parser.{Ast, Parser}
+import kodiak.parser.ParserSpec
 
 class DocumentSpec extends ParserSpec:
-  "Empty documents" should "be parsed" in {
-    val input    = ""
-    val expected = Ast.Document()
-    assertParse(input, expected, Parser.document)
+  test("Empty documents") {
+    assertParse(
+      input = "",
+      expected = Ast.Document(),
+      Parser.document,
+    )
   }
 end DocumentSpec
