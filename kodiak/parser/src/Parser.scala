@@ -34,21 +34,19 @@ object Parser:
   def stmt[$: P] = P:
     expr
 
-  def expr[$: P]: ParsingRun[Ast.Expr] =
-    import KodiakWhitespace.multiline0
-    P {
-      `expr-head` ~ `expr-tail`.rep(min = 1).?
-    }.map {
-      case (expr, None)        => expr
-      case (expr, Some(tails)) =>
-        tails.foldLeft(expr) {
-          case (function, args: Ast.Collection) =>
-            Ast.FunctionApplication(function, args)
-          case (receiver, path: Ast.Id) =>
-            Ast.PathApplication(receiver, path)
-        }
-    }
-  end expr
+  def expr[$: P]: ParsingRun[Ast.Expr] = P {
+    import KodiakWhitespace.multiline0;
+    `expr-head` ~ `expr-tail`.rep(min = 1).?
+  }.map {
+    case (expr, None) =>
+      expr
+    case (expr, Some(tails)) =>
+      tails.foldLeft(expr):
+        case (function, args: Ast.Collection) =>
+          Ast.FunctionApplication(function, args)
+        case (receiver, path: Ast.Id) =>
+          Ast.PathApplication(receiver, path)
+  }
 
   def `expr-head`[$: P]: P[Ast.Expr] = P:
     (&(CharIn("(", "{", "[")) ~~
@@ -65,35 +63,5 @@ object Parser:
   def `expr-tail`[$: P]: ParsingRun[Ast.Collection | Ast.Id] = P {
     ("." ~~ `plain-id`) | args
   }
-
-  // def stmt[$: P]: P[Ast.Expr] = P {
-  //   `val-definition` |
-  //     `var-definition` |
-  //     `set-definition` |
-  //     `let-definition` |
-  //     expr
-  // }
-
-  // def expr[$: P]: P[Ast.Expr] = P {
-  //   `expr-head`
-  // }
-
-  // def `path-application`[$: P]: P[Ast.Id] = P { "." ~~/ id }
-
-  // def `expr-head`[$: P]: P[Ast.Expr] = P:
-  //   (&(StringIn("if", "match", "while", "for")) ~~
-  //     (`if` | `match` | `while` | `for`)) |
-  //     (&(StringIn("val", "var", "set", "let")) ~~
-  //       (`val-definition` | `var-definition` | `set-definition` | `let-definition`)) |
-  //     literal
-
-  // def literal[$: P]: P[Ast.Expr] = P:
-  //   `signed-decimal` | `signed-integer` | text |
-  //     `raw-number` | `raw-text` | `raw-id` |
-  //     (&(`plain-id`) ~~
-  //       (`raw-text` | `raw-number` | `plain-id`)) |
-  //     TRUE | FALSE | UNIT |
-  //     decimal | integer |
-  //     group | collection
 
 end Parser

@@ -44,10 +44,10 @@ object KodiakWhitespace:
             (currentChar) match
               case ' ' | '\t' | '\r' | '\n' =>
                 loop(index + 1, states, nesting = 0)
-              case '(' =>
+              case '(' | '[' | '{' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelCommentMaybeStart,
+                  Seq(State.ToplevelCommentMaybeStart),
                   nesting,
                 )
               case _ => exitAndReport(ctx)(index)
@@ -56,22 +56,22 @@ object KodiakWhitespace:
               case '?' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelCommentStart,
+                  Seq(State.ToplevelCommentStart),
                   nesting,
                 )
               case _ => exitAndReport(ctx)(index - 1)
           case State.ToplevelCommentStart =>
             (currentChar) match
-              case ')' =>
+              case ')' | ']' | '}' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelSinglelineComment,
+                  Seq(State.ToplevelSinglelineComment),
                   nesting,
                 )
               case _ =>
                 loop(
                   index,
-                  states :+ State.ToplevelMultilineComment,
+                  Seq(State.ToplevelMultilineComment),
                   nesting,
                 )
           case State.ToplevelSinglelineComment =>
@@ -79,7 +79,7 @@ object KodiakWhitespace:
               case '\n' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelWhitespace,
+                  Seq(State.ToplevelWhitespace),
                   nesting - 1,
                 )
               case _ =>
@@ -93,13 +93,13 @@ object KodiakWhitespace:
               case '?' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelMultilineCommentMaybeEnd,
+                  Seq(State.ToplevelMultilineCommentMaybeEnd),
                   nesting,
                 )
-              case '(' =>
+              case '(' | '[' | '{' =>
                 loop(
                   index + 1,
-                  states :+ State.NestedMultilineCommentMaybeStart,
+                  Seq(State.NestedMultilineCommentMaybeStart),
                   nesting,
                 )
               case _ =>
@@ -110,16 +110,16 @@ object KodiakWhitespace:
                 )
           case State.ToplevelMultilineCommentMaybeEnd =>
             (currentChar) match
-              case ')' =>
+              case ')' | ']' | '}' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelWhitespace,
+                  Seq(State.ToplevelWhitespace),
                   nesting - 1,
                 )
               case _ =>
                 loop(
                   index,
-                  states :+ State.ToplevelMultilineComment,
+                  Seq(State.ToplevelMultilineComment),
                   nesting,
                 )
             end match
@@ -155,10 +155,10 @@ object KodiakWhitespace:
             (currentChar) match
               case ' ' | '\t' =>
                 loop(index + 1, states, nesting = 0)
-              case '(' =>
+              case '(' | '[' | '{' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelCommentMaybeStart,
+                  Seq(State.ToplevelCommentMaybeStart),
                   nesting,
                 )
               case _ => exitAndReport(ctx)(index)
@@ -167,22 +167,22 @@ object KodiakWhitespace:
               case '?' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelCommentStart,
+                  Seq(State.ToplevelCommentStart),
                   nesting,
                 )
               case _ => exitAndReport(ctx)(index - 1)
           case State.ToplevelCommentStart =>
             (currentChar) match
-              case ')' =>
+              case ')' | ']' | '}' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelSinglelineComment,
+                  Seq(State.ToplevelSinglelineComment),
                   nesting,
                 )
               case _ =>
                 loop(
                   index,
-                  states :+ State.ToplevelMultilineComment,
+                  Seq(State.ToplevelMultilineComment),
                   nesting,
                 )
           case State.ToplevelSinglelineComment =>
@@ -190,7 +190,7 @@ object KodiakWhitespace:
               case '\n' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelWhitespace,
+                  Seq(State.ToplevelWhitespace),
                   nesting - 1,
                 )
               case _ =>
@@ -204,13 +204,13 @@ object KodiakWhitespace:
               case '?' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelMultilineCommentMaybeEnd,
+                  Seq(State.ToplevelMultilineCommentMaybeEnd),
                   nesting,
                 )
-              case '(' =>
+              case '(' | '[' | '{' =>
                 loop(
                   index + 1,
-                  states :+ State.NestedMultilineCommentMaybeStart,
+                  Seq(State.NestedMultilineCommentMaybeStart),
                   nesting,
                 )
               case _ =>
@@ -221,16 +221,16 @@ object KodiakWhitespace:
                 )
           case State.ToplevelMultilineCommentMaybeEnd =>
             (currentChar) match
-              case ')' =>
+              case ')' | ']' | '}' =>
                 loop(
                   index + 1,
-                  states :+ State.ToplevelWhitespace,
+                  Seq(State.ToplevelWhitespace),
                   nesting - 1,
                 )
               case _ =>
                 loop(
                   index,
-                  states :+ State.ToplevelMultilineComment,
+                  Seq(State.ToplevelMultilineComment),
                   nesting,
                 )
             end match

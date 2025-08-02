@@ -3,6 +3,7 @@ default:
 
 test-parser:
   ./mill -w kodiak.parser.jvm.test.testOnly \
+    kodiak.parser.CommentSpec \
     kodiak.parser.KeywordSpec \
     kodiak.parser.expr.ExprSpec \
     kodiak.parser.expr.ApplicationSpec \
