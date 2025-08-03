@@ -24,6 +24,9 @@ trait SharedModule extends ScalaModule, PublishModule:
 
   def publishVersion = "0.1.0"
 
+  def scalacOptions =
+    Seq("-source:future", "-language:experimental.modularity")
+
   def pomSettings = PomSettings(
     description = "Kodiak",
     organization = "kodiak",

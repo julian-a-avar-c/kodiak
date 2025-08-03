@@ -8,7 +8,7 @@ class DocumentSpec extends ParserSpec:
     assertParse(
       input = "",
       expected = Ast.Document(),
-      Parser.document,
+      Parser.Document,
     )
   }
 end DocumentSpec

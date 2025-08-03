@@ -2,7 +2,7 @@ default:
   just --list
 
 test-parser:
-  ./mill -w kodiak.parser.jvm.test
+  ./mill -w kodiak.parser.jvm.test.testCached
 
 ast:
   ./mill kodiak.cli ast ./examples/0.hello-world.kodiak
