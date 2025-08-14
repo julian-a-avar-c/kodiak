@@ -114,4 +114,19 @@ class ExprSpec extends ParserSpec:
       Parser.Document,
     )
   }
+
+  test("Operator 2 + 3") {
+    assertParse(
+      input = "account.add(1)",
+      expected = Ast.Document(
+        Ast.FunctionApplication(
+          Ast.PathApplication(Ast.Id("account"), Ast.Id("add")),
+          Ast.Tuple(Ast.Integer(1)),
+        ),
+      ),
+      Parser.Document,
+    )
+  }
+
+  // --------------------------------------------------------------------------
 end ExprSpec

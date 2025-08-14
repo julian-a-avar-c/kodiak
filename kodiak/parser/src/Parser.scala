@@ -4,8 +4,17 @@ import scala.Seq as ScalaSeq
 
 import fastparse.*
 import scala.annotation.unchecked.uncheckedVariance
+import fastparse.Parsed.Success
+import fastparse.Parsed.Failure
 
 object Parser:
+  def parse(input: String): Either[String, Ast.Document] =
+    parse(input, Document) match
+      case _: Failure =>
+        Left("Parsing failed")
+      case Success(value: Ast.Document, index) =>
+        Right(value)
+
   def parse[A](input: String, parser: P[?] ?=> P[A]): Parsed[A] =
     fastparse.parse(input, parser(using _))
 
@@ -14,37 +23,89 @@ object Parser:
   def Document[$: P]: P[Ast.Document] =
     P {
       (Start ~~
-        Expr.repX(min = 0)) ~~
+        Stmt.repX(min = 0)) ~~
         End
     }
-      .map(expr => Ast.Document(expr.toSeq*))
+      .map(stmts => Ast.Document(stmts*))
   end Document
 
   def LineSep[$: P]: P[Unit] =
     P { NL | CharIn(";") }
 
+  def Stmt[$: P]: P[Ast.Stmt] = P {
+    ValDefinition |
+      VarDefinition |
+      SetDefinition |
+      LetDefinition |
+      While |
+      Expr
+  }
+
+  def ValDefinition[$: P]: P[Ast.ValDefinition] =
+    import kodiak.parser.Whitespace.multiline
+    P { "val" ~ (RawId | PlainId) ~ "=" ~ Expr }
+      .map((predicate, body) => Ast.ValDefinition(predicate, body))
+  end ValDefinition
+
+  def VarDefinition[$: P]: P[Ast.VarDefinition] =
+    import kodiak.parser.Whitespace.multiline
+    P { "var" ~ (RawId | PlainId) ~ "=" ~ Expr }
+      .map((predicate, body) => Ast.VarDefinition(predicate, body))
+  end VarDefinition
+
+  def SetDefinition[$: P]: P[Ast.SetDefinition] =
+    import kodiak.parser.Whitespace.multiline
+    P { "set" ~ (RawId | PlainId) ~ "=" ~ Expr }
+      .map((predicate, body) => Ast.SetDefinition(predicate, body))
+  end SetDefinition
+
+  def LetDefinition[$: P]: P[Ast.LetDefinition] =
+    import kodiak.parser.Whitespace.multiline
+    P { "let" ~ (RawId | PlainId) ~ "=" ~ Expr }
+      .map((predicate, body) => Ast.LetDefinition(predicate, body))
+  end LetDefinition
+
+  def While[$: P]: P[Ast.While] =
+    import kodiak.parser.Whitespace.multiline
+    P { "while" ~ Expr ~ "do" ~ Expr }
+      .map((predicate, body) => Ast.While(predicate, body))
+  end While
+
   def Expr[$: P]: P[Ast.Expr] =
     P {
-      ExprHead ~~ (Args |
-        ("." ~~
-          (Digits |
-            Args |
-            IdBlock |
-            IdWord))).repX(min = 1).?
+      If |
+        (ExprHead ~~
+          (Args |
+            // (kodiak.parser.Whitespace.singleline ~~ PlainId) |
+            ("." ~~
+              (Digits |
+                Args |
+                RawId |
+                PlainId))).repX(min = 1).?)
+    }.map {
+      case (expr: Ast.Expr) =>
+        expr
+      case (expr, None) =>
+        expr
+      case (head, Some(tails)) =>
+        tails.foldLeft(head) {
+          case (expr, args: Ast.Collection) =>
+            Ast.FunctionApplication(expr, args)
+          case (expr, path: Ast.Id) =>
+            Ast.PathApplication(expr, path)
+          case (expr, digit: String) =>
+            ???
+        }
     }
-      .map {
-        case (expr, None) =>
-          expr
-        case (head, Some(tails)) =>
-          tails.foldLeft(head) {
-            case (expr, args: Ast.Collection) =>
-              Ast.FunctionApplication(expr, args)
-            case (expr, path: Ast.Id) =>
-              Ast.PathApplication(expr, path)
-            case (expr, digit: String) =>
-              ???
-          }
-      }
+  end Expr
+
+  def If[$: P]: P[Ast.If] =
+    import kodiak.parser.Whitespace.multiline
+    P { "if" ~ Expr ~ "then" ~ Expr ~ ("else" ~ Expr).? }
+      .map((predicate, thenBranch, elseBranch) =>
+        Ast.If(predicate, thenBranch, elseBranch),
+      )
+  end If
 
   def Args[$: P]: P[Ast.Collection] = P {
     Collection |
@@ -56,7 +117,7 @@ object Parser:
   def ExprHead[$: P]: P[Ast.Expr] = P:
     Group |
       Collection |
-      IdBlock |
+      RawId |
       PlainText |
       Decimal |
       Integer |
@@ -65,7 +126,7 @@ object Parser:
       UNIT |
       RawNumber |
       RawText |
-      IdWord
+      PlainId
   end ExprHead
 
   def Collection[$: P]: P[Ast.Collection] =
@@ -74,7 +135,7 @@ object Parser:
   def Group[$: P]: P[Ast.Expr] =
     P { TupleGroup | SeqGroup | SetGroup }
 
-  def IdBlock[$: P]: P[Ast.Id] =
+  def RawId[$: P]: P[Ast.Id] =
     P { "`" ~~ RawBlock }
       .map(value => Ast.Id(value))
 
@@ -92,14 +153,14 @@ object Parser:
     Digits.map(value => Ast.Integer(value.toInt))
 
   def RawNumber[$: P]: P[Ast.RawNumber] =
-    P { IdWord ~~ "#" ~~ (RawBlock | Word) }
+    P { PlainId ~~ "#" ~~ (RawBlock | Word) }
       .map((interpolator, value) => Ast.RawNumber(interpolator, value))
 
   def RawText[$: P]: P[Ast.RawText] =
-    P { IdWord ~~ "\"" ~~ (RawBlock | Word) }
+    P { PlainId ~~ "\"" ~~ (RawBlock | Word) }
       .map((interpolator, value) => Ast.RawText(interpolator, value))
 
-  def IdWord[$: P]: P[Ast.Id] =
+  def PlainId[$: P]: P[Ast.Id] =
     P { !DIGIT ~~ ID ~~ Word0 }.!.map(value => Ast.Id(value))
 
   // --------------------------------------------------------------------------
@@ -116,9 +177,10 @@ object Parser:
   ): P[ScalaSeq[Ast.Expr]] = P {
     NoCut(
       OPEN ~~/ (Expr.repX(min = 2, sep = ",") ~~ ",".?) ~~ CLOSE,
-    ) | NoCut(
-      OPEN ~~/ (Expr ~~ ",").repX(min = 0, max = 1) ~~ CLOSE,
-    )
+    ) |
+      NoCut(
+        OPEN ~~/ (Expr ~~ ",").repX(min = 0, max = 1) ~~ CLOSE,
+      )
   }
 
   def Tuple[$: P]: P[Ast.Tuple] =
@@ -160,7 +222,7 @@ object Parser:
 
   // --------------------------------------------------------------------------
 
-  def RAW_BLOCK[A: P](
+  inline def RAW_BLOCK[A: P](
       OPEN: P[?] ?=> P[Unit],
       CLOSE: P[?] ?=> P[Unit],
   ): P[String] =
@@ -179,7 +241,7 @@ object Parser:
   inline def ID[$: P]: P[Unit] =
     P { !NOT_ID ~~ AnyChar }
 
-  def NOT_ID[$: P]: P[Unit] =
+  inline def NOT_ID[$: P]: P[Unit] =
     inline val bracketing   = "()[]{}"
     inline val whitespace   = " \t\r\n"
     inline val separator    = ".,;"
