@@ -1,19 +1,20 @@
 package kodiak.parser
 
-import scala.Seq as ScalaSeq
+import kodiak.core.utils.valueCanEqualValueOfSameType
 
 import fastparse.*
 import scala.annotation.unchecked.uncheckedVariance
-import fastparse.Parsed.Success
-import fastparse.Parsed.Failure
+import fastparse.Parsed.{Failure, Success}
+
+case class ParserException(failure: Failure) extends Exception(failure.toString)
 
 object Parser:
-  def parse(input: String): Either[String, Ast.Document] =
+  def parse(input: String): Ast.Document throws ParserException =
     parse(input, Document) match
-      case _: Failure =>
-        Left("Parsing failed")
+      case failure: Failure =>
+        throw ParserException(failure)
       case Success(value: Ast.Document, index) =>
-        Right(value)
+        value
 
   def parse[A](input: String, parser: P[?] ?=> P[A]): Parsed[A] =
     fastparse.parse(input, parser(using _))
@@ -111,7 +112,7 @@ object Parser:
     Collection |
       TupleGroup.map(Ast.Tuple(_)) |
       SeqGroup.map(Ast.Seq(_)) |
-      SetGroup.map(Ast.Set(_))
+      SetGroup.map(expr => Ast.Set(expr*))
   }
 
   def ExprHead[$: P]: P[Ast.Expr] = P:
@@ -174,7 +175,7 @@ object Parser:
   def Sequence[$: P](
       OPEN: P[?] ?=> P[Unit],
       CLOSE: P[?] ?=> P[Unit],
-  ): P[ScalaSeq[Ast.Expr]] = P {
+  ): P[scala.Seq[Ast.Expr]] = P {
     NoCut(
       OPEN ~~/ (Expr.repX(min = 2, sep = ",") ~~ ",".?) ~~ CLOSE,
     ) |

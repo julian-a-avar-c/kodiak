@@ -1,5 +1,7 @@
 package kodiak.parser
 
+import kodiak.core.utils.valueCanEqualValueOfSameType
+
 import fastparse.*
 import fastparse.Parsed.{Success, Failure}
 import org.scalactic.source.Position

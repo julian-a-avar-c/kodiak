@@ -1,17 +1,21 @@
 package kodiak.cli
 
 import kodiak.parser.{Ast, Parser}
+import kodiak.parser.ParserException
 import kodiak.interpreter.Interpreter
+import kodiak.interpreter.Interpreter.given
 
 object Main:
-  def main(args: Array[String]): Unit =
+  def main(args: Array[String]): Unit throws Exception =
     val input = "printline(\"[Hello, World!])"
 
-    Parser.parse(input) match
-      case Left(error) =>
-        ???
-      case Right(value: Ast.Document) =>
-        Interpreter.interpret(value)
-    end match
+    val value =
+      try Parser.parse(input)
+      catch
+        case e: ParserException =>
+          System.err.println(s"Error: ${e.getMessage}")
+          Ast.Document()
+
+    Interpreter.interpret(value)
   end main
 end Main

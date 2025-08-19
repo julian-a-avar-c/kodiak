@@ -23,9 +23,10 @@ object Ast:
   sealed trait Number          extends Expr
   case class Id(value: String) extends Expr
   sealed trait Text            extends Expr
-  sealed trait Collection      extends Expr
-  sealed trait Application     extends Expr
-  sealed trait Control         extends Expr
+  sealed trait Collection      extends Expr:
+    val exprs: collection.Iterable[Expr]
+  sealed trait Application extends Expr
+  sealed trait Control     extends Expr
 
   case class PlainText(value: String)                 extends Text
   case class RawText(interpolator: Id, value: String) extends Text
@@ -36,11 +37,14 @@ object Ast:
 
   case class Tuple(exprs: Expr*) extends Collection
   case class Seq(exprs: Expr*)   extends Collection
-  case class Set(exprs: Expr*)   extends Collection
+  case class Set(_exprs: Expr*)  extends Collection:
+    val exprs: scala.collection.mutable.Set[Expr] =
+      scala.collection.mutable.Set(_exprs*)
+  end Set
 
-  case class FunctionApplication(function: Expr, argsGroups: Collection*)
+  case class FunctionApplication(function: Expr, args: Collection)
       extends Application
-  case class PathApplication(receiver: Expr, paths: Ast.Id*) extends Application
+  case class PathApplication(receiver: Expr, path: Ast.Id) extends Application
 
   case class If(
       predicate: Ast.Expr,

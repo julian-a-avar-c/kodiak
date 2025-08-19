@@ -13,14 +13,14 @@ object Whitespace:
 
   type State = Int
   object State:
-    val ToplevelWhitespace: Int               = 100
-    val ToplevelCommentMaybeStart: Int        = 101
-    val ToplevelCommentStart: Int             = 102
-    val ToplevelSinglelineComment: Int        = 103
-    val ToplevelMultilineComment: Int         = 104
-    val ToplevelMultilineCommentMaybeEnd: Int = 105
+    val ToplevelWhitespace: Int               = 0x101
+    val ToplevelCommentMaybeStart: Int        = 0x102
+    val ToplevelCommentStart: Int             = 0x103
+    val ToplevelSinglelineComment: Int        = 0x104
+    val ToplevelMultilineComment: Int         = 0x105
+    val ToplevelMultilineCommentMaybeEnd: Int = 0x106
 
-    val NestedMultilineCommentMaybeStart: Int = 200
+    val NestedMultilineCommentMaybeStart: Int = 0x201
   end State
 
   given none: Whitespace = ctx => ctx.freshSuccessUnit()

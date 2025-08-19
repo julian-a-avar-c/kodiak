@@ -1,4 +1,4 @@
-//| mill-version: 1.0.2
+//| mill-version: 1.0.3-native
 package build
 
 import mill.*
@@ -20,12 +20,17 @@ end Deps
 // ----------------------------------------------------------------------------
 
 trait SharedModule extends ScalaModule, PublishModule:
-  def scalaVersion = "3.7.1"
+  def scalaVersion = "3.7.2"
 
   def publishVersion = "0.1.0"
 
   def scalacOptions =
-    Seq("-source:future", "-language:experimental.modularity")
+    Seq(
+      "-source:future",
+      "-language:strictEquality",
+      "-language:experimental.modularity",
+      "-language:experimental.saferExceptions",
+    )
 
   def pomSettings = PomSettings(
     description = "Kodiak",
@@ -62,8 +67,11 @@ object kodiak extends Module:
     def moduleDeps = Seq(parser)
 
   object interpreter extends SharedModule:
-    def mvnDeps    = Seq(Deps.`os-lib`)
     def moduleDeps = Seq(core, parser)
+    def mvnDeps    = Seq(Deps.`os-lib`)
+    object test extends ScalaTests, SharedTestModule:
+      def testParallelism = false // For debugging
+  end interpreter
 
   object parser extends SharedModule:
     def moduleDeps = Seq(core)
