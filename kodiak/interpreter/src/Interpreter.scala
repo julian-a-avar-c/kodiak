@@ -25,26 +25,30 @@ object Interpreter:
             stmts
               .map: stmt =>
                 stmt match
-                  case stmt: Ast.ValDefinition       => ??? // stmt.interpret
-                  case stmt: Ast.VarDefinition       => ??? // stmt.interpret
-                  case stmt: Ast.LetDefinition       => ??? // stmt.interpret
-                  case stmt: Ast.SetDefinition       => ??? // stmt.interpret
-                  case stmt: Ast.True.type           => ??? // stmt.interpret
-                  case stmt: Ast.False.type          => ??? // stmt.interpret
-                  case stmt: Ast.Unit.type           => ??? // stmt.interpret
-                  case stmt: Ast.Id                  => ??? // stmt.interpret
-                  case stmt: Ast.PlainText           => stmt.interpret
-                  case stmt: Ast.RawText             => stmt.interpret
-                  case stmt: Ast.Integer             => stmt.interpret
-                  case stmt: Ast.Decimal             => ??? // stmt.interpret
-                  case stmt: Ast.RawNumber           => ??? // stmt.interpret
-                  case stmt: Ast.Tuple               => ??? // stmt.interpret
-                  case stmt: Ast.Seq                 => ??? // stmt.interpret
-                  case stmt: Ast.Set                 => ??? // stmt.interpret
-                  case stmt: Ast.FunctionApplication => stmt.interpret
-                  case stmt: Ast.PathApplication     => ??? // stmt.interpret
-                  case stmt: Ast.If                  => ??? // stmt.interpret
-                  case stmt: Ast.While               => ??? // stmt.interpret
+                  // Stmt
+                  case stmt: Ast.ValDefinition => ???
+                  case stmt: Ast.VarDefinition => ???
+                  case stmt: Ast.LetDefinition => ???
+                  case stmt: Ast.SetDefinition => ???
+                  case stmt: Ast.While         => ???
+                  // Expr
+                  case expr: Ast.True.type           => ???
+                  case expr: Ast.False.type          => ???
+                  case expr: Ast.Unit.type           => ???
+                  case expr: Ast.Id                  => expr
+                  case expr: Ast.PlainText           => expr
+                  case expr: Ast.RawText             => expr
+                  case expr: Ast.Integer             => expr
+                  case expr: Ast.Decimal             => ???
+                  case expr: Ast.RawNumber           => ???
+                  case expr: Ast.Tuple               => expr
+                  case expr: Ast.Seq                 => expr
+                  case expr: Ast.Set                 => expr
+                  case expr: Ast.FunctionApplication => expr
+                  case expr: Ast.PathApplication     => ???
+                  case expr: Ast.If                  => ???
+                  case expr: Ast.Match               => ???
+                  case expr: Ast.For                 => ???
               .lastOption
               .getOrElse(
                 Ast.Unit,

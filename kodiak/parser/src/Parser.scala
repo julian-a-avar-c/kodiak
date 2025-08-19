@@ -75,28 +75,25 @@ object Parser:
   def Expr[$: P]: P[Ast.Expr] =
     P {
       If |
+        Match |
+        For |
         (ExprHead ~~
           (Args |
-            // (kodiak.parser.Whitespace.singleline ~~ PlainId) |
             ("." ~~
               (Digits |
-                Args |
                 RawId |
-                PlainId))).repX(min = 1).?)
+                PlainId))).?)
     }.map {
       case (expr: Ast.Expr) =>
         expr
       case (expr, None) =>
         expr
-      case (head, Some(tails)) =>
-        tails.foldLeft(head) {
-          case (expr, args: Ast.Collection) =>
-            Ast.FunctionApplication(expr, args)
-          case (expr, path: Ast.Id) =>
-            Ast.PathApplication(expr, path)
-          case (expr, digit: String) =>
-            ???
-        }
+      case (expr, Some(args: Ast.Collection)) =>
+        Ast.FunctionApplication(expr, args)
+      case (expr, Some(path: Ast.Id)) =>
+        Ast.PathApplication(expr, path)
+      case (expr, Some(digit: String)) =>
+        ???
     }
   end Expr
 
@@ -108,16 +105,42 @@ object Parser:
       )
   end If
 
-  def Args[$: P]: P[Ast.Collection] = P {
-    Collection |
-      TupleGroup.map(Ast.Tuple(_)) |
-      SeqGroup.map(Ast.Seq(_)) |
-      SetGroup.map(expr => Ast.Set(expr*))
-  }
+  def Match[$: P]: P[Ast.Match] =
+    import kodiak.parser.Whitespace.multiline
+    P { "match" ~ Expr ~ "with" ~ ExprHead ~ "then" ~ Expr }
+      .map((expr, pattern, branch) =>
+        Ast.Match(
+          expr,
+          Ast.Match.Branch(
+            {
+              pattern match
+                case literal: Ast.Literal => Ast.Match.LiteralPattern(literal)
+                case _                    => ???
+            },
+            branch,
+          ),
+        ),
+      )
+  end Match
+
+  def For[$: P]: P[Ast.For] =
+    import kodiak.parser.Whitespace.multiline
+    P { "for" ~ "let" ~ (RawId | PlainId) ~ "=" ~ Expr ~ "then" ~ Expr }
+      .map((id, expr, branch) =>
+        Ast.For(
+          scala.Seq(Ast.For.Enumerator(id, expr)),
+          branch,
+        ),
+      )
+  end For
 
   def ExprHead[$: P]: P[Ast.Expr] = P:
     Group |
-      Collection |
+      Literal
+  end ExprHead
+
+  def Literal[$: P]: P[Ast.Literal] = P:
+    Collection |
       RawId |
       PlainText |
       Decimal |
@@ -128,13 +151,20 @@ object Parser:
       RawNumber |
       RawText |
       PlainId
-  end ExprHead
+  end Literal
+
+  def Group[$: P]: P[Ast.Expr] =
+    P { TupleGroup | SeqGroup | SetGroup }
 
   def Collection[$: P]: P[Ast.Collection] =
     P { Tuple | Seq | Set }
 
-  def Group[$: P]: P[Ast.Expr] =
-    P { TupleGroup | SeqGroup | SetGroup }
+  def Args[$: P]: P[Ast.Collection] = P {
+    TupleGroup.map(Ast.Tuple(_)) |
+      SeqGroup.map(Ast.Seq(_)) |
+      SetGroup.map(Ast.Set(_)) |
+      Collection
+  }
 
   def RawId[$: P]: P[Ast.Id] =
     P { "`" ~~ RawBlock }

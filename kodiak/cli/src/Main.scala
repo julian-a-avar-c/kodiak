@@ -1,13 +1,15 @@
 package kodiak.cli
 
-import kodiak.parser.{Ast, Parser}
-import kodiak.parser.ParserException
 import kodiak.interpreter.Interpreter
+import kodiak.interpreter.InterpreterException
 import kodiak.interpreter.Interpreter.given
+import kodiak.parser.Ast
+import kodiak.parser.Parser
+import kodiak.parser.ParserException
 
 object Main:
-  def main(args: Array[String]): Unit throws Exception =
-    val input = "printline(\"[Hello, World!])"
+  def main(args: Array[String]): Unit =
+    val input = "printline(2)"
 
     val value =
       try Parser.parse(input)
@@ -16,6 +18,12 @@ object Main:
           System.err.println(s"Error: ${e.getMessage}")
           Ast.Document()
 
-    Interpreter.interpret(value)
+    try
+      given CanThrow[InterpreterException] = compiletime.erasedValue
+      Interpreter.interpret(value)
+    catch
+      case e =>
+        System.err.println(s"Error: ${e.getMessage}")
+    end try
   end main
 end Main

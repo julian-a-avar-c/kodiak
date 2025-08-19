@@ -5,9 +5,11 @@ object Ast:
   case class Document(stmts: Stmt*) extends Ast
   sealed trait Whitespace           extends Ast
   sealed trait Stmt                 extends Ast
+  sealed trait Control              extends Ast
 
-  sealed trait Definition extends Stmt
-  sealed trait Expr       extends Stmt
+  sealed trait Definition  extends Stmt
+  sealed trait Expr        extends Stmt
+  sealed trait ControlStmt extends Stmt
 
   case class ValDefinition(id: Id, value: Expr) extends Definition
   case class VarDefinition(id: Id, value: Expr) extends Definition
@@ -17,16 +19,18 @@ object Ast:
   case object Singleline extends Whitespace
   case object Newline    extends Whitespace
 
-  case object True             extends Expr
-  case object False            extends Expr
-  case object Unit             extends Expr
-  sealed trait Number          extends Expr
-  case class Id(value: String) extends Expr
-  sealed trait Text            extends Expr
-  sealed trait Collection      extends Expr:
+  sealed trait Literal     extends Expr
+  sealed trait ControlExpr extends Expr
+
+  case object True             extends Literal
+  case object False            extends Literal
+  case object Unit             extends Literal
+  sealed trait Number          extends Literal
+  case class Id(value: String) extends Literal
+  sealed trait Text            extends Literal
+  sealed trait Collection      extends Literal:
     val exprs: collection.Iterable[Expr]
-  sealed trait Application extends Expr
-  sealed trait Control     extends Expr
+  sealed trait Application extends Literal
 
   case class PlainText(value: String)                 extends Text
   case class RawText(interpolator: Id, value: String) extends Text
@@ -44,15 +48,32 @@ object Ast:
 
   case class FunctionApplication(function: Expr, args: Collection)
       extends Application
-  case class PathApplication(receiver: Expr, path: Ast.Id) extends Application
+  case class PathApplication(receiver: Expr, path: Id) extends Application
 
   case class If(
-      predicate: Ast.Expr,
-      thenBranch: Ast.Expr,
-      elseBranch: Option[Ast.Expr],
-  ) extends Control
+      predicate: Expr,
+      thenBranch: Expr,
+      elseBranch: Option[Expr],
+  ) extends ControlExpr
+  case class Match(expr: Expr, branches: Match.Branch*) extends ControlExpr
+  object Match:
+    case class Branch(pattern: Match.Pattern, thenBranch: Expr) extends Ast
+    sealed trait Pattern                                        extends Ast
+
+    case class LiteralPattern(literal: Literal) extends Pattern
+    case object ElsePattern                     extends Pattern
+  end Match
+
   case class While(
-      predicate: Ast.Expr,
-      body: Ast.Expr,
-  ) extends Control
+      predicate: Expr,
+      body: Expr,
+  ) extends ControlStmt
+  case class For(
+      enumerators: scala.Seq[Ast.For.Enumerator],
+      body: Expr,
+  ) extends ControlExpr
+  object For:
+    case class Enumerator(id: Id, expr: Expr) extends Ast
+  end For
+
 end Ast
