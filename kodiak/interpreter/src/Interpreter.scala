@@ -2,6 +2,18 @@ package kodiak.interpreter
 
 import kodiak.parser.Ast
 import kodiak.core.utils.valueCanEqualValueOfSameType
+import kodiak.parser.Ast.True
+import kodiak.parser.Ast.False
+import kodiak.parser.Ast.Id
+import kodiak.parser.Ast.PlainText
+import kodiak.parser.Ast.RawText
+import kodiak.parser.Ast.Decimal
+import kodiak.parser.Ast.RawNumber
+import kodiak.parser.Ast.FunctionApplication
+import kodiak.parser.Ast.PathApplication
+import kodiak.parser.Ast.If
+import kodiak.parser.Ast.Match
+import kodiak.parser.Ast.For
 
 case class InterpreterException(message: String)
     extends scala.Exception(message)
@@ -39,12 +51,12 @@ object Interpreter:
                   case expr: Ast.PlainText           => expr
                   case expr: Ast.RawText             => expr
                   case expr: Ast.Integer             => expr
-                  case expr: Ast.Decimal             => ???
+                  case expr: Ast.Decimal             => expr
                   case expr: Ast.RawNumber           => ???
                   case expr: Ast.Tuple               => expr
                   case expr: Ast.Seq                 => expr
                   case expr: Ast.Set                 => expr
-                  case expr: Ast.FunctionApplication => expr
+                  case expr: Ast.FunctionApplication => expr.interpret
                   case expr: Ast.PathApplication     => ???
                   case expr: Ast.If                  => ???
                   case expr: Ast.Match               => ???
@@ -63,12 +75,16 @@ object Interpreter:
 
         function match
           case Ast.Id("printline") =>
-            args.exprs.map:
-              case arg: Ast.Integer   => print(arg.value)
-              case arg: Ast.PlainText => print(arg.value)
-              case arg: Ast.RawText   => print(arg.value)
-              case _                  => ???
-            println()
+            val arg = (args.exprs.headOption getOrElse Ast.Unit)
+            println {
+              arg match
+                case Ast.PlainText(value) => value
+                case Ast.Integer(value)   => value
+                case Ast.Decimal(value)   => value
+                case Ast.True             => "true"
+                case Ast.False            => "false"
+                case _                    => ???
+            }
             Ast.Unit
           case Ast.Id("+") =>
             val interpreted =

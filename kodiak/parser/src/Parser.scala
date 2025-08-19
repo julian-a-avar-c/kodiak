@@ -6,7 +6,8 @@ import fastparse.*
 import scala.annotation.unchecked.uncheckedVariance
 import fastparse.Parsed.{Failure, Success}
 
-case class ParserException(failure: Failure) extends Exception(failure.toString)
+case class ParserException(failure: Failure)
+    extends Exception(failure.extra.trace(true).longAggregateMsg)
 
 object Parser:
   def parse(input: String): Ast.Document throws ParserException =
@@ -22,16 +23,18 @@ object Parser:
   // --------------------------------------------------------------------------
 
   def Document[$: P]: P[Ast.Document] =
+    import kodiak.parser.Whitespace.multiline0
     P {
-      (Start ~~
-        Stmt.repX(min = 0)) ~~
+      Start ~
+        (Stmt ~~ LineSep).rep(min = 0) ~
+        (Stmt ~~ LineSep.?).? ~
         End
     }
-      .map(stmts => Ast.Document(stmts*))
+      .map((heads, last) => Ast.Document((heads ++ last.toSeq)*))
   end Document
 
   def LineSep[$: P]: P[Unit] =
-    P { NL | CharIn(";") }
+    P { NL | ";" }
 
   def Stmt[$: P]: P[Ast.Stmt] = P {
     ValDefinition |
@@ -82,7 +85,7 @@ object Parser:
             ("." ~~
               (Digits |
                 RawId |
-                PlainId))).?)
+                PlainId).log)).?)
     }.map {
       case (expr: Ast.Expr) =>
         expr
