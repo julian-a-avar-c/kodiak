@@ -5,18 +5,68 @@ import mill.*
 import mill.scalalib.*, publish.*
 import mill.scalanativelib.*
 import mill.scalalib.scalafmt.ScalafmtModule
-import mill.api.Task.Simple
 import mill.javascriptlib.TypeScriptModule
 
 object Deps:
   object Version:
     def `scalatest` = "3.2.19"
+    def `antlr4`    = millbuild.Deps.Version.`antlr4`
+  end Version
 
-  def `os-lib`    = mvn"com.lihaoyi::os-lib::0.11.4"
-  def `fastparse` = mvn"com.lihaoyi::fastparse::3.1.1"
-  def `mainargs`  = mvn"com.lihaoyi::mainargs::0.7.6"
-  def `scalatest` = mvn"org.scalatest::scalatest::${Version.`scalatest`}"
+  def `os-lib`         = mvn"com.lihaoyi::os-lib::0.11.4"
+  def `fastparse`      = mvn"com.lihaoyi::fastparse::3.1.1"
+  def `mainargs`       = mvn"com.lihaoyi::mainargs::0.7.6"
+  def `scalatest`      = mvn"org.scalatest::scalatest::${Version.`scalatest`}"
+  def `antlr4-runtime` = mvn"org.antlr:antlr4-runtime:${Version.`antlr4`}"
 end Deps
+
+// ----------------------------------------------------------------------------
+
+object kodiak extends Module:
+  object core extends SharedModule
+
+  object cli extends SharedModule:
+    def moduleDeps = Seq(core, parser, interpreter)
+    def mvnDeps    = Seq(Deps.`os-lib`, Deps.`mainargs`)
+
+  object compiler extends SharedModule:
+    def moduleDeps = Seq(parser)
+
+  object interpreter extends SharedModule:
+    def moduleDeps = Seq(core, parser)
+    def mvnDeps    = Seq(Deps.`os-lib`)
+    object test extends ScalaTests, SharedTestModule:
+      def testParallelism = false // For debugging
+  end interpreter
+
+  object parser extends SharedModule:
+    def moduleDeps = Seq(core)
+    def mvnDeps    = Seq(Deps.fastparse)
+    object test extends ScalaTests, SharedTestModule:
+      def testParallelism = false // For debugging
+  end parser
+
+  object antlr extends AntlrModule:
+    def moduleDeps = Seq(core)
+    def mvnDeps    = Seq(Deps.`antlr4-runtime`)
+
+    def antlrPackage        = Some("kodiak.antlr")
+    def antlrGrammarSources = Task.Source("grammars")
+
+    // object test extends ScalaTests, SharedTestModule:
+    //   def testParallelism = false // For debugging
+  end antlr
+
+  // --------------------------------------------------------------------------
+
+  // object `tree-sitter` extends TypeScriptModule:
+  //   def npmDeps = Seq(
+  //     "tree-sitter@0.25.0",
+  //     "tree-sitter-javascript@0.23.1",
+  //   )
+  // end `tree-sitter`
+
+end kodiak
 
 // ----------------------------------------------------------------------------
 
@@ -54,40 +104,3 @@ trait SharedNativeModule extends SharedModule, ScalaNativeModule:
 
 trait SharedTestModule extends TestModule.ScalaTest:
   def scalaTestVersion = Deps.Version.`scalatest`
-
-// ----------------------------------------------------------------------------
-
-object kodiak extends Module:
-  object core extends SharedModule
-
-  object cli extends SharedModule:
-    def moduleDeps = Seq(core, parser, interpreter)
-    def mvnDeps    = Seq(Deps.`os-lib`, Deps.`mainargs`)
-
-  object compiler extends SharedModule:
-    def moduleDeps = Seq(parser)
-
-  object interpreter extends SharedModule:
-    def moduleDeps = Seq(core, parser)
-    def mvnDeps    = Seq(Deps.`os-lib`)
-    object test extends ScalaTests, SharedTestModule:
-      def testParallelism = false // For debugging
-  end interpreter
-
-  object parser extends SharedModule:
-    def moduleDeps = Seq(core)
-    def mvnDeps    = Seq(Deps.fastparse)
-    object test extends ScalaTests, SharedTestModule:
-      def testParallelism = false // For debugging
-  end parser
-
-  // --------------------------------------------------------------------------
-
-  object `tree-sitter` extends TypeScriptModule:
-    def npmDeps = Seq(
-      "tree-sitter@0.25.0",
-      "tree-sitter-javascript@0.23.1",
-    )
-  end `tree-sitter`
-
-end kodiak

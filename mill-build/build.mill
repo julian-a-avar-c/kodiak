@@ -1,0 +1,41 @@
+package build
+
+import mill.*, scalalib.*
+import mill.meta.MillBuildRootModule
+
+object Deps:
+  object Version:
+    def `antlr4` = "4.13.2"
+  end Version
+
+  def `antlr4` = mvn"org.antlr:antlr4:${Version.`antlr4`}"
+end Deps
+
+object `package` extends MillBuildRootModule:
+  def millVersion = "1.0.3-native"
+  def mvnDeps     = Seq(Deps.`antlr4`)
+
+  def generatedSources = Task {
+    os.write(
+      Task.dest / "Deps.scala",
+      s"""
+        |package millbuild
+        |
+        |import mill.*, scalalib.*
+        |
+        |object Deps:
+        |  object Version:
+        |    def `antlr4` = "${Deps.Version.`antlr4`}"
+        |  end Version
+        |
+        |  // dep.dep.module.organization.value
+        |  // val mod = dep.dep.module.name.value
+        |  // val ver = dep.dep.version
+        |  def `antlr4` = "${Dep.unparse(Deps.`antlr4`).get}"
+        |end Deps
+      """.stripMargin,
+    )
+    super.generatedSources() ++ Seq(PathRef(Task.dest))
+  }
+
+end `package`

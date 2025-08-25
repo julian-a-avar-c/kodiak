@@ -1,0 +1,52 @@
+package build
+
+import mill.*
+import mill.api.*
+import mill.scalalib.*
+import org.antlr.v4.tool.{ANTLRMessage, ANTLRToolListener}
+
+import scala.collection.mutable
+
+trait AntlrModule extends mill.scalalib.JavaModule:
+  def antlrGrammarSources: Task.Simple[PathRef]
+  def antlrPackage: Option[String]   = None
+  def antlrGenerateVisitor: Boolean  = false
+  def antlrGenerateListener: Boolean = false
+
+  def antlrGrammarSourceFiles = Task {
+    os.walk(antlrGrammarSources().path).filter(_.ext == "g4").map(PathRef(_))
+  }
+
+  def antlrGenerate = Task {
+    val antlrToolArgs = mutable.ArrayBuffer.empty[String]
+
+    antlrToolArgs ++= antlrGrammarSourceFiles().map(_.path.toString)
+    antlrToolArgs += "-o"
+    antlrToolArgs += Task.dest.toString
+    if antlrGenerateVisitor then antlrToolArgs += "-visitor"
+    if antlrGenerateListener then antlrToolArgs += "-listener"
+    if antlrPackage.isDefined then
+      antlrToolArgs ++= Seq("-package", antlrPackage.get)
+
+    val antlrTool = new org.antlr.v4.Tool(antlrToolArgs.toArray)
+    antlrTool.addListener(new ToolListener())
+    antlrTool.processGrammarsOnCommandLine()
+
+    os.walk(Task.dest)
+      .filter(path => os.isFile(path) && path.ext == "java")
+      .map(PathRef(_))
+  }
+
+  override def generatedSources = Task {
+    super.generatedSources() ++ antlrGenerate()
+  }
+end AntlrModule
+
+class ToolListener extends ANTLRToolListener:
+  override def info(msg: String): Unit =
+    throw new RuntimeException(msg)
+  override def error(msg: ANTLRMessage): Unit =
+    throw new RuntimeException(msg.toString)
+  override def warning(msg: ANTLRMessage): Unit =
+    throw new RuntimeException(msg.toString)
+end ToolListener

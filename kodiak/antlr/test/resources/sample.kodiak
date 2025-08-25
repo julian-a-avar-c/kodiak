@@ -1,0 +1,38 @@
+{?} Simple Kodiak test program to validate grammar
+
+val name :text = "Julian
+var count :int = 0
+
+fn greet(person :text) :text =>
+  "[Hello, ${person}!]
+
+fn fibonacci(n :int) :int => {
+  if n <= 1 then
+    n
+  else
+    fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+plex person(name :text, age :int) =>
+  fn introduce :text => "[I'm $name, age $age]
+  fn is-adult? :bool => age >= 18
+end person
+
+val numbers = [1, 2, 3, 4, 5]
+val evens = {2, 4, 6, 8}
+val coords = (10, 20)
+val data = {name = "test, value = 42}
+
+for i = 1 to 10 do
+  set count += i
+
+val squares = for i = 1 to 5 yield i * i
+
+match count
+  with 0 then "zero
+  with n :int then "[number: $n]
+  else "unknown"
+
+val p = :person("Alice, 25)
+val greeting = greet(name)
+val fib_result = fibonacci(10)
