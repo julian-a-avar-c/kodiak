@@ -1,4 +1,4 @@
-parser grammar Kodiak;
+parser grammar KodiakParser;
 
 options {
     tokenVocab = KodiakLexer;

@@ -2,57 +2,59 @@ package kodiak.antlr
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import org.antlr.v4.runtime._
-import org.antlr.v4.runtime.tree._
+import org.antlr.v4.runtime.*
+import org.antlr.v4.runtime.tree.*
 
-class KodiakIntegrationTest extends AnyFunSuite with Matchers {
+class KodiakIntegrationTest extends AnyFunSuite with Matchers:
 
-  private def createParser(input: String): KodiakParser = {
+  private def createParser(input: String): KodiakParser =
     val charStream = CharStreams.fromString(input)
-    val lexer = new KodiakLexer(charStream)
-    val tokens = new CommonTokenStream(lexer)
-    val parser = new KodiakParser(tokens)
+    val lexer      = new KodiakLexer(charStream)
+    val tokens     = new CommonTokenStream(lexer)
+    val parser     = new KodiakParser(tokens)
 
     // Remove default error listeners
     parser.removeErrorListeners()
     lexer.removeErrorListeners()
 
     parser
-  }
+  end createParser
 
-  private def parseAndValidate(input: String): ParseTree = {
+  private def parseAndValidate(input: String): ParseTree =
     val parser = createParser(input)
 
     // Add error listener to catch any parse errors
-    val errorListener = new BaseErrorListener {
+    val errorListener = new BaseErrorListener:
       var errors = List.empty[String]
 
-      override def syntaxError(recognizer: Recognizer[_, _], offendingSymbol: Any,
-                             line: Int, charPositionInLine: Int, msg: String,
-                             e: RecognitionException): Unit = {
+      override def syntaxError(
+          recognizer: Recognizer[?, ?],
+          offendingSymbol: Any,
+          line: Int,
+          charPositionInLine: Int,
+          msg: String,
+          e: RecognitionException,
+      ): Unit =
         errors = s"line $line:$charPositionInLine $msg" :: errors
-      }
-    }
 
     parser.addErrorListener(errorListener)
     val tree = parser.program()
 
-    if (errorListener.errors.nonEmpty) {
+    if errorListener.errors.nonEmpty then
       fail(s"Parse errors: ${errorListener.errors.reverse.mkString("; ")}")
-    }
 
     tree
-  }
+  end parseAndValidate
 
   test("integration: parse complete kodiak program") {
     val program = """
       {?} Complete Kodiak program test
 
-      val name :text = "World"
+      val name :text = "World
       var counter :int = 0
 
       fn greet(person :text) :text =>
-        "[Hello, ${person}!]"
+        "[Hello, ${person}!]
 
       fn factorial(n :int) :int => {
         if n <= 1 then
@@ -62,8 +64,8 @@ class KodiakIntegrationTest extends AnyFunSuite with Matchers {
       }
 
       plex person(name :text, age :int) =>
-        fn introduce() :text => "[I'm ${name}, age ${age}]"
-        fn isAdult() :bool => age >= 18
+        fn introduce :text => "[I'm ${name}, age ${age}]
+        fn is-adult? :bool => age >= 18
       end person
 
       val alice = person("Alice", 25)
@@ -95,45 +97,44 @@ class KodiakIntegrationTest extends AnyFunSuite with Matchers {
     val input = """val x :int = 42 + 3 * (5 - 1)"""
 
     val charStream = CharStreams.fromString(input)
-    val lexer = new KodiakLexer(charStream)
-    val tokens = new CommonTokenStream(lexer)
+    val lexer      = new KodiakLexer(charStream)
+    val tokens     = new CommonTokenStream(lexer)
     tokens.fill()
 
     val tokenList = tokens.getTokens
     tokenList should not be empty
 
     // Verify we get expected token types
-    val tokenTypes = tokenList.map(_.getType).filter(_ != Token.EOF)
-    tokenTypes should contain (KodiakLexer.VAL)
-    tokenTypes should contain (KodiakLexer.COLON)
-    tokenTypes should contain (KodiakLexer.INT)
-    tokenTypes should contain (KodiakLexer.ASSIGN)
-    tokenTypes should contain (KodiakLexer.INTEGER)
-    tokenTypes should contain (KodiakLexer.PLUS)
-    tokenTypes should contain (KodiakLexer.MULTIPLY)
-    tokenTypes should contain (KodiakLexer.LPAREN)
-    tokenTypes should contain (KodiakLexer.RPAREN)
+    val tokenTypes =
+      import scala.collection.convert.ImplicitConversions.given
+      tokenList.map(_.getType).filter(_ != Token.EOF)
+    tokenTypes `should` contain(KodiakLexer.VAL_DEF)
+    tokenTypes `should` contain(KodiakLexer.COLON)
+    tokenTypes `should` contain(KodiakLexer.INT)
+    tokenTypes `should` contain(KodiakLexer.ASSIGN)
+    tokenTypes `should` contain(KodiakLexer.INTEGER)
+    tokenTypes `should` contain(KodiakLexer.PLUS)
+    tokenTypes `should` contain(KodiakLexer.MULTIPLY)
+    tokenTypes `should` contain(KodiakLexer.LPAREN)
+    tokenTypes `should` contain(KodiakLexer.RPAREN)
   }
 
   test("integration: visitor pattern works") {
     val input = """val x = 42"""
-    val tree = parseAndValidate(input)
+    val tree  = parseAndValidate(input)
 
     // Simple visitor to count variable declarations
-    val visitor = new KodiakBaseVisitor[Int] {
-      override def visitValDecl(ctx: KodiakParser.ValDeclContext): Int = {
+    val visitor = new KodiakParserBaseVisitor[Int]:
+      override def visitValDecl(ctx: KodiakParser.ValDeclContext): Int =
         1 + Option(ctx.expr()).map(visit).getOrElse(0)
-      }
 
-      override def visitProgram(ctx: KodiakParser.ProgramContext): Int = {
+      override def visitProgram(ctx: KodiakParser.ProgramContext): Int =
         ctx.statement().foldLeft(0)((acc, stmt) => acc + visit(stmt))
-      }
 
       override def defaultResult(): Int = 0
 
       override def aggregateResult(aggregate: Int, nextResult: Int): Int =
         aggregate + nextResult
-    }
 
     val count = visitor.visit(tree)
     count should be(1)
@@ -145,24 +146,22 @@ class KodiakIntegrationTest extends AnyFunSuite with Matchers {
       val y = 2
       var z = 3
     """
-    val tree = parseAndValidate(input)
+    val tree  = parseAndValidate(input)
 
     // Simple listener to count declarations
-    class DeclarationCounter extends KodiakBaseListener {
+    class DeclarationCounter extends KodiakBaseListener:
       var valCount = 0
       var varCount = 0
 
-      override def enterValDecl(ctx: KodiakParser.ValDeclContext): Unit = {
+      override def enterValDecl(ctx: KodiakParser.ValDeclContext): Unit =
         valCount += 1
-      }
 
-      override def enterVarDecl(ctx: KodiakParser.VarDeclContext): Unit = {
+      override def enterVarDecl(ctx: KodiakParser.VarDeclContext): Unit =
         varCount += 1
-      }
-    }
+    end DeclarationCounter
 
     val counter = new DeclarationCounter()
-    val walker = new ParseTreeWalker()
+    val walker  = new ParseTreeWalker()
     walker.walk(counter, tree)
 
     counter.valCount should be(2)
@@ -173,16 +172,19 @@ class KodiakIntegrationTest extends AnyFunSuite with Matchers {
     // Test that parser can handle and report errors gracefully
     val badInput = """val x = """
 
-    val parser = createParser(badInput)
-    val errorListener = new BaseErrorListener {
+    val parser        = createParser(badInput)
+    val errorListener = new BaseErrorListener:
       var errorCount = 0
 
-      override def syntaxError(recognizer: Recognizer[_, _], offendingSymbol: Any,
-                             line: Int, charPositionInLine: Int, msg: String,
-                             e: RecognitionException): Unit = {
+      override def syntaxError(
+          recognizer: Recognizer[?, ?],
+          offendingSymbol: Any,
+          line: Int,
+          charPositionInLine: Int,
+          msg: String,
+          e: RecognitionException,
+      ): Unit =
         errorCount += 1
-      }
-    }
 
     parser.addErrorListener(errorListener)
     val tree = parser.program()
@@ -191,4 +193,4 @@ class KodiakIntegrationTest extends AnyFunSuite with Matchers {
     errorListener.errorCount should be > 0
     tree should not be null // Parser should still return a tree
   }
-}
+end KodiakIntegrationTest

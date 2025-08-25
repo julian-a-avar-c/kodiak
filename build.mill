@@ -46,15 +46,15 @@ object kodiak extends Module:
       def testParallelism = false // For debugging
   end parser
 
-  object antlr extends AntlrModule:
+  object antlr extends SharedModule, AntlrModule:
     def moduleDeps = Seq(core)
     def mvnDeps    = Seq(Deps.`antlr4-runtime`)
 
     def antlrPackage        = Some("kodiak.antlr")
     def antlrGrammarSources = Task.Source("grammars")
 
-    // object test extends ScalaTests, SharedTestModule:
-    //   def testParallelism = false // For debugging
+    object test extends ScalaTests, SharedTestModule:
+      def testParallelism = false // For debugging
   end antlr
 
   // --------------------------------------------------------------------------

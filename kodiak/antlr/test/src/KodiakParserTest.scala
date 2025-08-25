@@ -55,7 +55,7 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
   }
 
   test("parse variable declaration without type annotation") {
-    val input = """val name = "Alice""""
+    val input = """val name = "Alice"""
     val tree  = parseProgram(input)
     tree should not be null
   }
@@ -85,7 +85,7 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
   }
 
   test("parse simple function declaration") {
-    val input = """fn greet(name :text) :text => "Hello, " + name"""
+    val input = """fn greet(name :text) :text => "[Hello, ${name}]""""
     val tree  = parseProgram(input)
     tree should not be null
   }
@@ -97,7 +97,7 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
   }
 
   test("parse function without parameters") {
-    val input = """fn getCurrentTime() :text => "now""""
+    val input = """fn current-time :text => "now"""
     val tree  = parseProgram(input)
     tree should not be null
   }
@@ -134,14 +134,20 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
 
   test("parse match expression") {
     val input =
-      """match x with 0 then "zero" with n :int then "number" else "unknown""""
+      """match x
+        with 0 then "zero
+        with n :int then "number"
+        else "unknown"""
     val tree = parseProgram(input)
     tree should not be null
   }
 
   test("parse simple plex declaration") {
     val input =
-      """plex person(name :text, age :int) => fn greet :text => "Hello" end person"""
+      """
+      |plex person(name :text, age :int) =>
+      |  fn greet :text => "Hello
+      |end person"""
     val tree = parseProgram(input)
     tree should not be null
   }
@@ -161,7 +167,7 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
   test("parse extension declaration") {
     val input = """
       extension int =>
-        fn isEven() :bool => this % 2 == 0
+        fn is-even? :bool => this % 2 == 0
       end extension
     """
     val tree  = parseProgram(input)
@@ -172,7 +178,7 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
     val input = """
       val numbers = [1, 2, 3, 4, 5]
       val coords = (10, 20)
-      val uniqueItems = {1, 2, 3}
+      val unique-items = {1, 2, 3}
       val mapping = {name = "test", value = 42}
     """
     val tree  = parseProgram(input)
@@ -183,7 +189,7 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
     val input = """
       val simple = "hello"
       val raw = r"no\nescapes"
-      val interpolated = "[Hello, ${name}!]"
+      val interpolated = "[Hello, ${name}]
     """
     val tree  = parseProgram(input)
     tree should not be null
@@ -204,8 +210,8 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
 
   test("parse boolean and unit literals") {
     val input = """
-      val isTrue = true
-      val isFalse = false
+      val is-true = true
+      val is-false = false
       val nothing = unit
     """
     val tree  = parseProgram(input)
@@ -215,7 +221,7 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
   test("parse function calls and member access") {
     val input = """
       val result = add(1, 2)
-      val length = text.length()
+      val length = text.length
       val first = tuple.0
     """
     val tree  = parseProgram(input)
@@ -258,9 +264,9 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
   test("parse try-catch statements") {
     val input = """
       try
-        riskyOperation()
-      catch e :Exception then
-        handleError(e)
+        risky-operation
+      catch e :exception then
+        handle-error(e)
     """
     val tree  = parseProgram(input)
     tree should not be null
@@ -280,8 +286,8 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
 
   test("parse raw identifiers") {
     val input = """
-      val `special-name` = 42
-      val `type` = "keyword as identifier"
+      val `[special name] = 42
+      val type = "[keyword as identifier]
     """
     val tree  = parseProgram(input)
     tree should not be null
@@ -301,12 +307,12 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
       }
 
       plex person(name :text, age :int) =>
-        fn greet() :text => "[Hello, I'm ${name}]"
-        fn isAdult() :bool => age >= 18
+        fn greet :text => "[Hello, I'm ${name}]
+        fn is-adult? :bool => age >= 18
       end person
 
       val alice = person("Alice", 25)
-      val greeting = alice.greet()
+      val greeting = alice.greet
 
       for i = 1 to 10 do
         set counter += i
@@ -324,11 +330,10 @@ class KodiakParserTest extends AnyFunSuite with Matchers:
 
   test("parse type annotations") {
     val input = """
-      val seqOfInts :[int] = [1, 2, 3]
-      val setOfText :{text} = {"a", "b", "c"}
-      val tupleType :(int, text) = (42, "hello")
-      val mapType :{text = int} = {name = "test", value = 42}
-      val fnType :fn(int, int) -> int = add
+      val seq-of-ints :[int] = [1, 2, 3]
+      val set-of-text :{text} = {"a, "b, "c}
+      val tuple-type :(int, text) = (42, "hello)
+      val map-type :{text = int} = {name = "test, value = 42}
     """
     val tree  = parseProgram(input)
     tree should not be null

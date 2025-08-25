@@ -4,4 +4,8 @@ out/
 
 .vscode/
 
+**/.antlr/
+
 **/grammars/**/*.java
+**/grammars/**/*.tokens
+**/grammars/**/*.interp
