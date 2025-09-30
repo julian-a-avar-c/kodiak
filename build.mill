@@ -1,4 +1,4 @@
-//| mill-version: 1.0.3-native
+//| mill-version: 1.0.5-native
 package build
 
 import mill.*
@@ -6,21 +6,7 @@ import mill.scalalib.*, publish.*
 import mill.scalanativelib.*
 import mill.scalalib.scalafmt.ScalafmtModule
 import mill.javascriptlib.TypeScriptModule
-
-object Deps:
-  object Version:
-    def `scalatest` = "3.2.19"
-    def `antlr4`    = millbuild.Deps.Version.`antlr4`
-  end Version
-
-  def `os-lib`         = mvn"com.lihaoyi::os-lib::0.11.4"
-  def `fastparse`      = mvn"com.lihaoyi::fastparse::3.1.1"
-  def `mainargs`       = mvn"com.lihaoyi::mainargs::0.7.6"
-  def `scalatest`      = mvn"org.scalatest::scalatest::${Version.`scalatest`}"
-  def `antlr4-runtime` = mvn"org.antlr:antlr4-runtime:${Version.`antlr4`}"
-end Deps
-
-// ----------------------------------------------------------------------------
+import mill.api.Task.Simple
 
 object kodiak extends Module:
   object core extends SharedModule
@@ -47,11 +33,14 @@ object kodiak extends Module:
   end parser
 
   object antlr extends SharedModule, AntlrModule:
-    def moduleDeps = Seq(core)
-    def mvnDeps    = Seq(Deps.`antlr4-runtime`)
+    def moduleDeps    = Seq(core, parser)
+    def mvnDeps       = Seq(Deps.`antlr4-runtime`)
+    def scalacOptions = super.scalacOptions() ++ Seq("-Yexplicit-nulls")
 
-    def antlrPackage        = Some("kodiak.antlr")
-    def antlrGrammarSources = Task.Source("grammars")
+    def antlrPackage          = Some("kodiak.antlr")
+    def antlrGrammarSources   = Task.Source("grammars")
+    def antlrGenerateVisitor  = true
+    def antlrGenerateListener = true
 
     object test extends ScalaTests, SharedTestModule:
       def testParallelism = false // For debugging
@@ -70,6 +59,21 @@ end kodiak
 
 // ----------------------------------------------------------------------------
 
+object Deps:
+  object Version:
+    def `scalatest` = "3.2.19"
+    def `antlr4`    = millbuild.Deps.Version.`antlr4`
+  end Version
+
+  def `os-lib`         = mvn"com.lihaoyi::os-lib::0.11.4"
+  def `fastparse`      = mvn"com.lihaoyi::fastparse::3.1.1"
+  def `mainargs`       = mvn"com.lihaoyi::mainargs::0.7.6"
+  def `scalatest`      = mvn"org.scalatest::scalatest::${Version.`scalatest`}"
+  def `antlr4-runtime` = mvn"org.antlr:antlr4-runtime:${Version.`antlr4`}"
+end Deps
+
+// ----------------------------------------------------------------------------
+
 trait SharedModule extends ScalaModule, PublishModule:
   def scalaVersion = "3.7.2"
 
@@ -77,6 +81,7 @@ trait SharedModule extends ScalaModule, PublishModule:
 
   def scalacOptions =
     Seq(
+      "-explain",
       "-source:future",
       "-language:strictEquality",
       "-language:experimental.modularity",

@@ -1,226 +1,120 @@
 parser grammar KodiakParser;
 
 options {
-    tokenVocab = KodiakLexer;
+	tokenVocab = KodiakLexer;
 }
 
 // Program Structure
-program: statement* EOF;
+program: WS? (stmts WS?)? EOF;
 
-statement:
-    valDecl
-    | varDecl
-    | setStmt
-    | letDecl
-    | whileLoop
-    | ifStmt
-    | matchStmt
-    | forLoop
-    | forYield
-    | plexDecl
-    | extensionDecl
-    | functionDecl
-    | tryStmt
-    | exprStmt
-    ;
+stmts: stmt (WS? stmtSep WS? stmt)* (WS? stmtSep)?;
+stmtSep: SEMI | NL;
 
-exprStmt: expr;
+stmt: decl | ifStmt | whileStmt | forStmt | expr;
 
-block: LBRACE statement* RBRACE;
+decl: valDecl | varDecl | setDecl;
+valDecl: VAL SL id SL eqDeclOp (STMT_WS expr | WS expr (WS END VAL)?);
+varDecl: VAR SL id SL eqDeclOp (STMT_WS expr | WS expr (WS END VAR)?);
+setDecl: SET SL id SL eqDeclOp (STMT_WS expr | WS expr (WS END SET)?);
 
-// Declarations
-valDecl: VAL_DEF identifier (COLON type)? ASSIGN expr;
-varDecl: VAR_DEF identifier (COLON type)? ASSIGN expr;
-setStmt: SET identifier (ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | MULTIPLY_ASSIGN | DIVIDE_ASSIGN) expr;
-letDecl: LET identifier ASSIGN expr;
+eqDeclOp: EQ | plainEqDeclOp | rawEqDeclOp;
+plainEqDeclOp: (rawIdWord | rawId) EQ;
+rawEqDeclOp:
+	LTID NOT_RTEQOP+ RTEQOP
+	| LAID NOT_RAEQOP+ RAEQOP
+	| LSID NOT_RSEQOP+ RSEQOP
+	;
 
-// Functions
-functionDecl: FN identifier LPAREN parameters? RPAREN (COLON type)? ARROW expr;
-parameters: parameter (COMMA parameter)*;
-parameter: identifier COLON type;
-
-// Control Flow
-whileLoop: WHILE expr DO expr;
-ifStmt: IF expr THEN expr (ELSE expr)?;
-matchStmt: MATCH expr matchCase* (ELSE expr)?;
-matchCase: WITH pattern THEN expr;
-forLoop: FOR (LET)? identifier ASSIGN expr (TO | DOWNTO) expr (STEP expr)? DO expr;
-forYield: FOR (LET)? identifier ASSIGN expr (TO | DOWNTO) expr (STEP expr)? YIELD expr;
-
-// Exception handling
-tryStmt: TRY expr catchClause* (THROWS identifier)?;
-catchClause: CATCH identifier COLON type THEN expr;
-
-// Patterns
-pattern:
-    literalPattern
-    | typePattern
-    | destructurePattern
-    | guardPattern
-    | wildcardPattern
-    ;
-
-literalPattern: literal;
-typePattern: identifier COLON type;
-destructurePattern:
-    LBRACKET pattern (COMMA pattern)* (COMMA ELLIPSIS identifier)? RBRACKET
-    | LBRACKET identifier COMMA ELLIPSIS identifier RBRACKET
-    | plexPattern
-    ;
-plexPattern: identifier LBRACE (identifier (COMMA identifier)*)? RBRACE;
-guardPattern: identifier GREATER_EQUAL expr | UNDERSCORE GREATER_EQUAL expr;
-wildcardPattern: UNDERSCORE;
-
-// Expressions
 expr:
-    ifExpr
-    | matchExpr
-    | forExpr
-    | forYieldExpr
-    | binaryExpr
-    ;
+	if
+	| match
+    | for
+	| fnApp
+    | opApp
+	| pathApp
+    | exprHead;
 
-ifExpr: IF expr THEN expr (ELSE expr)?;
-matchExpr: MATCH expr matchCase* (ELSE expr)?;
-forExpr: FOR (LET)? identifier ASSIGN expr (TO | DOWNTO) expr (STEP expr)? DO expr;
-forYieldExpr: FOR (LET)? identifier ASSIGN expr (TO | DOWNTO) expr (STEP expr)? YIELD expr;
+ifStmt: IF WS expr WS THEN WS expr (WS END IF)?;
+if: IF WS expr WS THEN WS expr WS ELSE WS expr (WS END IF)?;
 
-binaryExpr:
-    unaryExpr
-    | binaryExpr MULTIPLY binaryExpr
-    | binaryExpr DIVIDE binaryExpr
-    | binaryExpr MODULO binaryExpr
-    | binaryExpr PLUS binaryExpr
-    | binaryExpr MINUS binaryExpr
-    | binaryExpr LEFT_SHIFT binaryExpr
-    | binaryExpr RIGHT_SHIFT binaryExpr
-    | binaryExpr LESS_THAN binaryExpr
-    | binaryExpr LESS_EQUAL binaryExpr
-    | binaryExpr GREATER_THAN binaryExpr
-    | binaryExpr GREATER_EQUAL binaryExpr
-    | binaryExpr EQUALS binaryExpr
-    | binaryExpr NOT_EQUALS binaryExpr
-    | binaryExpr REFERENCE_EQUALS binaryExpr
-    | binaryExpr BITWISE_AND binaryExpr
-    | binaryExpr BITWISE_XOR binaryExpr
-    | binaryExpr BITWISE_OR binaryExpr
-    | binaryExpr AND binaryExpr
-    | binaryExpr OR binaryExpr
-    ;
+match: MATCH WS expr (WS matchBranch)+ (WS END MATCH)?;
+matchBranch: exprHead WS THEN WS expr;
 
-unaryExpr:
-    NOT unaryExpr
-    | MINUS unaryExpr
-    | PLUS unaryExpr
-    | BITWISE_NOT unaryExpr
-    | postfixExpr
-    ;
+forStmt: FOR WS forEnumerator WS DO WS expr (WS END FOR)?;
+for: FOR WS forEnumerator WS YIELD WS expr (WS END FOR)?;
+forEnumerator: LET? WS id WS EQ WS expr;
 
-postfixExpr:
-    primary
-    | postfixExpr DOT identifier
-    | postfixExpr DOT INTEGER
-    | postfixExpr LPAREN arguments? RPAREN
-    ;
+whileStmt: WHILE WS expr WS DO WS block (WS END WHILE)?;
 
-primary:
-    literal
-    | identifier
-    | THIS
-    | LPAREN expr RPAREN
-    | block
-    ;
+fnApp: exprHead SL? collection;
+opApp: exprHead SL id STMT_WS exprHead;
+pathApp: staticPathApp | indexPathApp;
+staticPathApp: exprHead STMT_WS? DOT id;
+indexPathApp: exprHead STMT_WS? DOT integer;
 
-arguments: expr (COMMA expr)*;
+exprHead:
+	TRUE
+	| FALSE
+	| UNIT
+	| plainText
+	| rawNumber
+    | rawId plainText
+    | rawId rawNumber
+    | rawId
+    | group
+	| collection
+	| decimal
+	| integer
+	| plainId plainText
+	| plainId rawNumber
+	| plainId;
 
-// This rule is now unused since we handle operators directly in binaryExpr
-// but kept for reference
-operator:
-    MULTIPLY | DIVIDE | MODULO
-    | PLUS | MINUS
-    | LEFT_SHIFT | RIGHT_SHIFT
-    | LESS_THAN | LESS_EQUAL | GREATER_THAN | GREATER_EQUAL
-    | EQUALS | NOT_EQUALS | REFERENCE_EQUALS
-    | BITWISE_AND
-    | BITWISE_XOR
-    | BITWISE_OR
-    | AND
-    | OR
-    ;
+group: LTUPLE exprHead RTUPLE;
 
-// Types
-type:
-    basicType
-    | collectionType
-    | tupleType
-    | functionType
-    | plexType
-    ;
+block: LSET (| WS | WS? stmts WS?) RSET;
 
-basicType: INT | INT8 | INT16 | INT64 | DEC | DEC32 | DEC64 | BOOL | TEXT | UNIT;
+// ----------------------------------------------------------------------------
 
-collectionType:
-    SEQ LPAREN type RPAREN
-    | SET LPAREN type RPAREN
-    | MAP LPAREN type COMMA type RPAREN
-    | LBRACKET type RBRACKET
-    | LBRACE type RBRACE
-    | COLON LBRACKET type RBRACKET
-    | COLON LBRACE type RBRACE
-    | COLON SEQ LPAREN type RPAREN
-    | COLON SET LPAREN type RPAREN
-    | COLON MAP LPAREN type COMMA type RPAREN
-    ;
+collection: tuple | array | set;
+tuple: LTUPLE (| WS | collectionContents) RTUPLE;
+array: LARRAY (| WS | collectionContents) RARRAY;
+set: LSET (| WS | collectionContents) RSET;
+collectionContents:
+	WS?
+	expr
+	(collectionSep expr)*
+	(collectionSep)?
+	;
+collectionSep: WS? COMMA WS?;
 
-tupleType:
-    LPAREN type (COMMA type)* RPAREN
-    | COLON LPAREN type (COMMA type)* RPAREN
-    | COLON TUPLE LPAREN type (COMMA type)* RPAREN
-    ;
-functionType: FN LPAREN (type (COMMA type)*)? RPAREN TYPE_ARROW type;
-plexType: identifier | COLON identifier;
+// ----------------------------------------------------------------------------
 
-// Plexes
-plexDecl: PLEX identifier (LPAREN parameters? RPAREN)? ARROW plexBody* END identifier;
-plexBody: field | method;
-field: (VAL_DEF | VAR_DEF) (PRIVATE | PUBLIC)? identifier COLON type ASSIGN expr;
-method: (PRIVATE | PUBLIC)? functionDecl;
+integer: DIGIT+;
+decimal: DIGIT+ DOT DIGIT+;
+rawNumber: rawNumberBlock | rawNumberWord;
+rawNumberBlock:
+	LTNUMBER NOT_RTUPLE* RTUPLE
+	| LANUMBER NOT_RARRAY* RARRAY
+	| LSNUMBER NOT_RSET* RSET
+	;
+rawNumberWord: HASH WORD+;
 
-// Extensions
-extensionDecl: EXTENSION type ARROW method* END EXTENSION;
+plainText: plainTextBlock | plainTextWord;
+plainTextBlock:
+	LTTEXT NOT_RTUPLE* RTUPLE
+	| LATEXT NOT_RARRAY* RARRAY
+	| LSTEXT NOT_RSET* RSET
+	;
+plainTextWord: DOUBLE_QUOTE WORD+;
 
-// Literals
-literal:
-    INTEGER
-    | DECIMAL
-    | SCIENTIFIC
-    | HEX_LITERAL
-    | BIN_LITERAL
-    | OCT_LITERAL
-    | STRING
-    | RAW_STRING
-    | INTERPOLATED_STRING
-    | RAW_NUMBER
-    | RAW_TEXT
-    | TRUE
-    | FALSE
-    | UNIT
-    | collection
-    ;
+id: rawId | plainId;
+plainId: ID_WORD WORD*;
+rawId: rawIdBlock | rawIdWord;
+rawIdWord: BACK_QUOTE WORD+;
+rawIdBlock:
+	LTID NOT_RTUPLE* RTUPLE
+	| LAID NOT_RARRAY* RARRAY
+	| LSID NOT_RSET* RSET
+	;
 
-collection:
-    tuple
-    | sequence
-    | set
-    | map
-    ;
 
-tuple: LPAREN (expr (COMMA expr)* COMMA?)? RPAREN;
-sequence: LBRACKET (expr (COMMA expr)* COMMA?)? RBRACKET;
-set: LBRACE (expr (COMMA expr)* COMMA?)? RBRACE;
-map: LBRACE mapEntry (COMMA mapEntry)* COMMA? RBRACE;
-
-mapEntry: (identifier | STRING) ASSIGN expr;
-
-// Identifiers
-identifier: PLAIN_ID | RAW_ID;

@@ -44,7 +44,7 @@ object Main:
       printAst: Flag,
   ) =
     // Either file or input must be defined, but not both
-    assert(!(file.isDefined && rawInput.isDefined))
+    assert(file.isDefined ^ rawInput.isDefined)
 
     val input = rawInput getOrElse file
       .map { file =>

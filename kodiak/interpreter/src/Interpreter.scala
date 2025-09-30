@@ -1,19 +1,7 @@
 package kodiak.interpreter
 
-import kodiak.parser.Ast
 import kodiak.core.utils.valueCanEqualValueOfSameType
-import kodiak.parser.Ast.True
-import kodiak.parser.Ast.False
-import kodiak.parser.Ast.Id
-import kodiak.parser.Ast.PlainText
-import kodiak.parser.Ast.RawText
-import kodiak.parser.Ast.Decimal
-import kodiak.parser.Ast.RawNumber
-import kodiak.parser.Ast.FunctionApplication
-import kodiak.parser.Ast.PathApplication
-import kodiak.parser.Ast.If
-import kodiak.parser.Ast.Match
-import kodiak.parser.Ast.For
+import kodiak.parser.Ast
 
 case class InterpreterException(message: String)
     extends scala.Exception(message)
