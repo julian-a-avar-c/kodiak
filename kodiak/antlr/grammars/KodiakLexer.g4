@@ -7,26 +7,6 @@ RARRAY: ']';
 LSET: '{';
 RSET: '}';
 END: 'end';
-NOT_RTUPLE: ~')';
-NOT_RARRAY: ~']';
-NOT_RSET: ~'}';
-
-LTTEXT: '"(';
-LATEXT: '"[';
-LSTEXT: '"{';
-LTID: '`(';
-LAID: '`[';
-LSID: '`{';
-LTNUMBER: '#(';
-LANUMBER: '#[';
-LSNUMBER: '#{';
-
-RTEQOP: '=)';
-RAEQOP: '=]';
-RSEQOP: '=}';
-NOT_RTEQOP: ~[=)];
-NOT_RAEQOP: ~[=\]];
-NOT_RSEQOP: ~[=}];
 
 VAL: 'val';
 VAR: 'var';
@@ -72,20 +52,21 @@ DASH: '-';
 
 BACKSLASH: '\\';
 
-TILDE: '~';
-BANG: '!';
+SEMI: ';';
 AT: '@';
 HASH: '#';
+COLON: ':';
+COMMA: ',';
+DOT: '.';
+
+TILDE: '~';
+BANG: '!';
 DOLLAR: '$';
 MOD: '%';
 HAT: '^';
 AMP: '&';
 UNDER: '_';
 PIPE: '|';
-SEMI: ';';
-COLON: ':';
-COMMA: ',';
-DOT: '.';
 QUESTION: '?';
 
 // Literals
@@ -97,18 +78,10 @@ UNIT: 'unit';
 SINGLE_LINE_COMMENT: '{?}' ~[\r\n]* -> skip;
 MULTI_LINE_COMMENT: '{?' .*? '?}' -> skip;
 
-// Whitespace 
-WS: [ \t\r\n]+ -> channel(HIDDEN);
-SL: [ \t]+ -> channel(HIDDEN);
-NL: [\r\n]+ -> channel(HIDDEN);
-STMT_WS: // Whitespace with 1 optional NL
-    ( [ \t]+ ([\r\n] [ \t]*)?
-    | ([ \t]* [\r\n])? [ \t]+ 
-    | [\r\n]
-    ) -> channel(HIDDEN);
+// Whitespace
+SL: [ \t];
+NL: [\r\n];
 
-// 
-ID_WORD: ~[0-9 \t\r\n()[\]{},;.#"];
-WORD: ~[ \t\r\n()[\]{},;.#"];
-NON_WORD: [ \t\r\n()[\]{},;.#"];
+//
 DIGIT: [0-9];
+WORD: ~[ \t\r\n()[\]{},;.#"];

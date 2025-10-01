@@ -82,6 +82,7 @@ trait SharedModule extends ScalaModule, PublishModule:
   def scalacOptions =
     Seq(
       "-explain",
+      "-deprecation",
       "-source:future",
       "-language:strictEquality",
       "-language:experimental.modularity",

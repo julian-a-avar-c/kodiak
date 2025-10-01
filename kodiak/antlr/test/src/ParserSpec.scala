@@ -6,6 +6,8 @@ import fastparse.*
 import org.scalactic.source.Position
 import org.scalactic.Prettifier
 import org.scalatest.funsuite.*
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 
 abstract class UnitSpec extends AnyFunSuite
 
@@ -34,7 +36,18 @@ abstract class ParserSpec extends UnitSpec:
     //     // fail(s"${extra.trace(enableLogging = true).longAggregateMsg}")
     //     fail(s"Unexpected exception: ${e.getMessage}")
     // end try
-    assert(true)
+    // assert(true)
+    val inputStream       = CharStreams.fromString(input)
+    val kodiakLexer       = new KodiakLexer(inputStream)
+    val commonTokenStream = new CommonTokenStream(kodiakLexer)
+    val kodiakParser      = new KodiakParser(commonTokenStream)
+    // println(5)
+    val programContext = kodiakParser.program()
+    val listener       = new ParserListener
+    val visitor        = new ParserVisitor
+    // println(visitor.visitProgram(programContext))
+    // println(8)
+    assert(visitor.visitProgram(programContext) == expected)
   end assertParse
 
 end ParserSpec

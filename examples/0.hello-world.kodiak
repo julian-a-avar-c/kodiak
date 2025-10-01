@@ -1,15 +1,1 @@
-{?} Welcome to the Kodiak programming language!
-{? Comments can be single-line or multi-line ?}
-
-{?} Here is a simple program that prints "Hello, World!"
-printline("[Hello, World!])
-
-{?} You'll notice that in Kodiak, text is enclosed in square brackets prefixed with a double quote
-{?} If a piece of text doesn't contain any special characters, one can drop the brackets
-printline("Hello)
-
-{?} There exists other data types in Kodiak, such as integers, decimals, and booleans.
-
-printline(42)
-printline(3.14)
-printline(false)
+a1+2
