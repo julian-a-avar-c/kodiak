@@ -4,26 +4,79 @@ options {
 	tokenVocab = KodiakLexer;
 }
 
-// Program Structure
-program: programStart ws* stmts? ws* programEnd ws* EOF;
-// stmts: stmt (ssws? stmtSep ws* stmt)* (ssws? stmtSep)?;
-stmts: stmt (stmtSep stmt?)*;
-stmt: expr;
-stmtSep: (SL* | SL* NL SL*) (SEMI | NL) ws*;
-programStart: ;
-programEnd: (SEMI | NL)?;
+@parser::members {
+	private Set<String> keywords = Set.of(
+		// simple literals
+		"true", "false", "unit",
+		// ctl
+		"for", "if", "while", "match", "with", "then", "else", "do", "yield",
+		// scope
+		"end", "case",
+		// decl
+		"val", "var", "set", "let"
+	);
+		
+	private boolean isKeyword(keyword: String) {
+		return
+			keywords.contains(keyword) &&
+			keywords.contains(_input.LT(1).getText());
+	}
 
-expr: opApp | /*fnApp |*/ exprHead;
-opApp: simpleExpr SL id SL simpleExpr;
-// fnApp: simpleExpr args;
-exprHead: simpleExpr;
+	private boolean isNotKeyword() {
+		return !keywords.contains(_input.LT(1).getText());
+	}
+	private boolean isNotKeyword(keyword: String) {
+		return !isKeyword(keyword);
+	}
+}
+
+// Program Structure
+program: ws* stmts ws* EOF;
+stmts: stmt? (stmtSep stmt?)* stmtSep?;
+stmt: expr | decl;
+stmtSep: (sl* (SEMI | nl)+ sl*)+;
+
+decl: valDecl | varDecl | setDecl;
+valDecl: val sl+ id sl+ EQ ws+ expr;
+varDecl: var sl+ id sl+ EQ ws+ expr;
+setDecl: set sl+ id sl+ EQ ws+ expr;
+letDecl: let sl+ id sl+ EQ ws+ expr;
+
+expr: group | collection | app | ctl;
+
+ctl: ifExpr | matchExpr | forExpr | whileExpr;
+
+ifExpr:
+	if ws+ app ws+ then ws+ expr (ws+ else ws+ expr)* (
+		ws+ end ' ' if
+	)?;
+matchExpr:
+	match ws+ app (ws+ matchBranch)+ (ws+ end ' ' match)?;
+matchBranch: matchBranchPatternWith | matchBranchPatternElse;
+matchBranchPatternWith:
+	with ws+ simpleExpr ws+ then ws+ expr (ws+ end ' ' case)?;
+matchBranchPatternElse: else ws+ expr (ws+ end ' ' case)?;
+
+forExpr:
+	for ws+ generatorStmts ws+ (do | yield) ws+ expr (
+		ws+ end ' ' for
+	)?;
+generatorStmts: generatorStmt (ws+ generatorConditional)?;
+generatorStmt: letDecl | valDecl;
+generatorConditional: if ws+ expr;
+
+whileExpr: while ws+ expr ws+ do ws+ expr (ws+ end ' ' while)?;
+
+app:
+	app (sl* args)+					# fnApp
+	| app (ws* DOT sl* simpleExpr)+	# pathApp
+	| app sl+ (id sl+ simpleExpr)+	# opApp
+	| simpleExpr					# exprHead;
 
 simpleExpr:
-	TRUE
-	| FALSE
-	| UNIT
-	| group
-	| collection
+	true
+	| false
+	| unit
 	| textBlock
 	| textWord
 	| numberBlock
@@ -43,22 +96,24 @@ simpleExpr:
 	| idWord
 	| decimal
 	| integer
-	| plainId
-    ;
+	| plainId;
 
 // ----------------------------------------------------------------------------
 
-args: group | collection;
+args: tupleArgs | arrayArgs | setArgs;
+tupleArgs: tupleGroup | LTUPLE ws* collectionItems ws* RTUPLE;
+arrayArgs: arrayGroup | LARRAY ws* collectionItems ws* RARRAY;
+setArgs: setGroup | LSET ws* collectionItems ws* RSET;
 
 group: tupleGroup | arrayGroup | setGroup;
 tupleGroup: LTUPLE ws* expr ws* RTUPLE;
 arrayGroup: LARRAY ws* expr ws* RARRAY;
 setGroup: LSET ws* expr ws* RSET;
 
-collection: tuple | array | set;
-tuple: LTUPLE ws* collectionItems ws* RTUPLE;
-array: LARRAY ws* collectionItems ws* RARRAY;
-set: LSET ws* collectionItems ws* RSET;
+collection: tupleExpr | arrayExpr | setExpr;
+tupleExpr: DOT LTUPLE ws* collectionItems ws* RTUPLE;
+arrayExpr: DOT LARRAY ws* collectionItems ws* RARRAY;
+setExpr: DOT LSET ws* collectionItems ws* RSET;
 collectionItems:
 	// Empty
 	COMMA?
@@ -78,9 +133,33 @@ numberBlock: HASH rawBlock;
 numberWord: HASH word;
 
 id: idBlock | idWord | plainId;
-plainId: idStart WORD;
+plainId: {isNotKeyword()}? idStart word?;
 idWord: BACK_QUOTE word;
 idBlock: BACK_QUOTE rawBlock;
+
+// ----------------------------------------------------------------------------
+
+true: {isKeyword("true")}? WORD;
+false: {isKeyword("false")}? WORD;
+unit: {isKeyword("unit")}? WORD;
+
+end: {isKeyword("end")}? WORD;
+case: {isKeyword("case")}? WORD;
+
+val: {isKeyword("val")}? WORD;
+var: {isKeyword("var")}? WORD;
+set: {isKeyword("set")}? WORD;
+let: {isKeyword("let")}? WORD;
+
+for: {isKeyword("for")}? WORD;
+if: {isKeyword("if")}? WORD;
+while: {isKeyword("while")}? WORD;
+match: {isKeyword("match")}? WORD;
+with: {isKeyword("with")}? WORD;
+then: {isKeyword("then")}? WORD;
+else: {isKeyword("else")}? WORD;
+do: {isKeyword("do")}? WORD;
+yield: {isKeyword("yield")}? WORD;
 
 // ----------------------------------------------------------------------------
 
@@ -88,75 +167,15 @@ rawBlock:
 	LTUPLE ~RTUPLE+? RTUPLE
 	| LARRAY ~RARRAY+? RARRAY
 	| LSET ~RSET+? RSET;
-idStart: (WORD | PLUS)+;
-word: (DIGIT | WORD | PLUS)+;
+block:
+	LTUPLE stmts RTUPLE
+	| LARRAY stmts RARRAY
+	| LSET stmts RSET;
+idStart: WORD;
+word: (WORD | DIGIT)+;
 
-ws: SL | NL;
+sl: SPACE | TAB;
+nl: RETURN | NEW_LINE;
+ws: sl | nl;
 // Single Statement WS
-ssws: SL+ | SL* NL SL*;
-
-//
-// stmt: // decl // | ifStmt // | whileStmt // | forStmt // | expr ;
-// 
-// decl: valDecl | varDecl | setDecl; valDecl: VAL SL id SL eqDeclOp (STMT_WS expr | WS expr (WS END
-// VAL)?); varDecl: VAR SL id SL eqDeclOp (STMT_WS expr | WS expr (WS END VAR)?); setDecl: SET SL id
-// SL eqDeclOp (STMT_WS expr | WS expr (WS END SET)?);
-// 
-// eqDeclOp: EQ | plainEqDeclOp | rawEqDeclOp; plainEqDeclOp: (rawIdWord | rawId) EQ; rawEqDeclOp:
-// LTID NOT_RTEQOP+ RTEQOP | LAID NOT_RAEQOP+ RAEQOP | LSID NOT_RSEQOP+ RSEQOP;
-// 
-// expr: // if // | match // | for // | fnApp // | opApp // | pathApp // | exprHead ;
-// 
-// ifStmt: IF WS expr WS THEN WS expr (WS END IF)?; if: IF WS expr WS THEN WS expr WS ELSE WS expr
-// (WS END IF)?;
-// 
-// match: MATCH WS expr (WS matchBranch)+ (WS END MATCH)?; matchBranch: exprHead WS THEN WS expr;
-// 
-//
-// 
-//
-// forStmt: FOR WS forEnumerator WS DO WS expr (WS END FOR)?; for: FOR WS forEnumerator WS YIELD WS
-// expr (WS END FOR)?; forEnumerator: LET? WS id WS EQ WS expr;
-// 
-// whileStmt: WHILE WS expr WS DO WS block (WS END WHILE)?;
-// 
-// fnApp: exprHead SL? collection; opApp: exprHead SL id STMT_WS exprHead; pathApp: staticPathApp |
-// indexPathApp; staticPathApp: exprHead STMT_WS? DOT id; indexPathApp: exprHead STMT_WS? DOT
-// integer;
-// 
-// exprHead: TRUE | FALSE | UNIT // | plainText // | rawNumber // | rawId plainText // | rawId
-// rawNumber // | rawId // | group // | collection // | decimal | integer // | plainId plainText //
-// | plainId rawNumber // | plainId ;
-// 
-// block: LSET ( | WS | WS? stmts WS?) RSET;
-// 
-// // ----------------------------------------------------------------------------
-// 
-// args: group | collection;
-// 
-// group: tupleGroup | arrayGroup | setGroup; tupleGroup: LTUPLE WS? (expr WS?)? RTUPLE; arrayGroup:
-// LARRAY WS? (expr WS?)? RARRAY; setGroup: LSET WS? (expr WS?)? RSET;
-// 
-// collection: tuple | array | set; tuple: LTUPLE WS? collectionItems WS? RTUPLE; array: LARRAY WS?
-// collectionItems WS? RARRAY; set: LSET WS? collectionItems WS? RSET;
-// 
-// collectionItems: collectionSep | expr WS? collectionSep | expr WS? (collectionSep WS? expr WS?)+
-// collectionSep?;
-// 
-// collectionSep: WS? COMMA WS?;
-// 
-// // ----------------------------------------------------------------------------
-// 
-// integer: DIGIT+; decimal: DIGIT+ DOT DIGIT+; rawNumber: rawNumberBlock | rawNumberWord;
-// rawNumberBlock: LTNUMBER NOT_RTUPLE* RTUPLE | LANUMBER NOT_RARRAY* RARRAY | LSNUMBER NOT_RSET*
-// RSET; rawNumberWord: HASH WORD+;
-// 
-// plainText: plainTextBlock | plainTextWord; plainTextBlock: LTTEXT NOT_RTUPLE* RTUPLE | LATEXT
-// NOT_RARRAY* RARRAY | LSTEXT NOT_RSET* RSET; plainTextWord: DOUBLE_QUOTE WORD+;
-// 
-// id: rawId | plainId; plainId: ID_WORD WORD*; rawId: rawIdBlock | rawIdWord; rawIdWord: BACK_QUOTE
-// WORD+; rawIdBlock: LTID NOT_RTUPLE* RTUPLE | LAID NOT_RARRAY* RARRAY | LSID NOT_RSET* RSET;
-// 
-//
-// 
-//
+ssws: sl+ | sl* nl sl*;
