@@ -7,7 +7,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 import kodiak.antlr.KodiakParser.*
 
 class ParserListener extends KodiakParserBaseListener:
-  def parse(input: String): Ast throws ParserException = ???
+  // def parse(input: String): Ast throws ParserException = ???
 
   // --------------------------------------------------------------------------
 

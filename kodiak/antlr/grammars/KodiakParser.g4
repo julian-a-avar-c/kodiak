@@ -4,32 +4,6 @@ options {
 	tokenVocab = KodiakLexer;
 }
 
-@parser::members {
-	private Set<String> keywords = Set.of(
-		// simple literals
-		"true", "false", "unit",
-		// ctl
-		"for", "if", "while", "match", "with", "then", "else", "do", "yield",
-		// scope
-		"end", "case",
-		// decl
-		"val", "var", "set", "let"
-	);
-		
-	private boolean isKeyword(keyword: String) {
-		return
-			keywords.contains(keyword) &&
-			keywords.contains(_input.LT(1).getText());
-	}
-
-	private boolean isNotKeyword() {
-		return !keywords.contains(_input.LT(1).getText());
-	}
-	private boolean isNotKeyword(keyword: String) {
-		return !isKeyword(keyword);
-	}
-}
-
 // Program Structure
 program: ws* stmts ws* EOF;
 stmts: stmt? (stmtSep stmt?)* stmtSep?;
@@ -37,46 +11,51 @@ stmt: expr | decl;
 stmtSep: (sl* (SEMI | nl)+ sl*)+;
 
 decl: valDecl | varDecl | setDecl;
-valDecl: val sl+ id sl+ EQ ws+ expr;
-varDecl: var sl+ id sl+ EQ ws+ expr;
-setDecl: set sl+ id sl+ EQ ws+ expr;
-letDecl: let sl+ id sl+ EQ ws+ expr;
+valDecl: VAL sl+ assignment;
+varDecl: VAR sl+ assignment;
+setDecl: SET sl+ assignment;
+letDecl: LET sl+ assignment;
+assignment: id sl+ EQ ws+ expr;
 
-expr: group | collection | app | ctl;
-
-ctl: ifExpr | matchExpr | forExpr | whileExpr;
-
-ifExpr:
-	if ws+ app ws+ then ws+ expr (ws+ else ws+ expr)* (
-		ws+ end ' ' if
-	)?;
-matchExpr:
-	match ws+ app (ws+ matchBranch)+ (ws+ end ' ' match)?;
-matchBranch: matchBranchPatternWith | matchBranchPatternElse;
-matchBranchPatternWith:
-	with ws+ simpleExpr ws+ then ws+ expr (ws+ end ' ' case)?;
-matchBranchPatternElse: else ws+ expr (ws+ end ' ' case)?;
-
-forExpr:
-	for ws+ generatorStmts ws+ (do | yield) ws+ expr (
-		ws+ end ' ' for
-	)?;
-generatorStmts: generatorStmt (ws+ generatorConditional)?;
-generatorStmt: letDecl | valDecl;
-generatorConditional: if ws+ expr;
-
-whileExpr: while ws+ expr ws+ do ws+ expr (ws+ end ' ' while)?;
+expr: group | collection | app;
 
 app:
-	app (sl* args)+					# fnApp
-	| app (ws* DOT sl* simpleExpr)+	# pathApp
-	| app sl+ (id sl+ simpleExpr)+	# opApp
-	| simpleExpr					# exprHead;
+	app (sl* args)+										# fnApp
+	| receiver = app (ws* DOT sl* member = simpleExpr)+		# pathApp
+	| left = app sl+ (op = id sl+ right = simpleExpr)+	# opApp
+	| complexExpr										# exprHead;
+
+complexExpr: ctl | fn | simpleExpr;
+
+ctl: ifExpr | matchExpr | forExpr | whileExpr;
+ifExpr:
+	IF ws+ app ws+ THEN ws+ expr (ws+ ELSE ws+ expr)* (
+		ws+ END SPACE IF
+	)?;
+matchExpr:
+	MATCH ws+ app (ws+ matchBranch)+ (ws+ END SPACE MATCH)?;
+matchBranch: matchBranchPatternWith | matchBranchPatternElse;
+matchBranchPatternWith:
+	WITH ws+ simpleExpr ws+ THEN ws+ expr (ws+ END SPACE CASE)?;
+matchBranchPatternElse: ELSE ws+ expr (ws+ END SPACE CASE)?;
+forExpr:
+	FOR ws+ generatorStmts ws+ (DO | YIELD) ws+ expr (
+		ws+ END SPACE FOR
+	)?;
+generatorStmts:
+	assignment
+	| generatorStmt? (stmtSep generatorStmt?)* stmtSep?;
+generatorStmt: (letDecl | valDecl) (ws+ generatorConditional)?;
+generatorConditional: IF ws+ expr;
+whileExpr:
+	WHILE ws+ expr ws+ DO ws+ expr (ws+ END SPACE WHILE)?;
+
+fn: args ws* FAT_ARROW ws* expr;
 
 simpleExpr:
-	true
-	| false
-	| unit
+	TRUE
+	| FALSE
+	| UNIT
 	| textBlock
 	| textWord
 	| numberBlock
@@ -127,39 +106,15 @@ collectionItems:
 textBlock: DOUBLE_QUOTE rawBlock;
 textWord: DOUBLE_QUOTE word;
 
-decimal: DIGIT+ DOT DIGIT+;
-integer: DIGIT+;
+decimal: DIGIT DOT DIGIT;
+integer: DIGIT;
 numberBlock: HASH rawBlock;
 numberWord: HASH word;
 
 id: idBlock | idWord | plainId;
-plainId: {isNotKeyword()}? idStart word?;
+plainId: idHead word?;
 idWord: BACK_QUOTE word;
 idBlock: BACK_QUOTE rawBlock;
-
-// ----------------------------------------------------------------------------
-
-true: {isKeyword("true")}? WORD;
-false: {isKeyword("false")}? WORD;
-unit: {isKeyword("unit")}? WORD;
-
-end: {isKeyword("end")}? WORD;
-case: {isKeyword("case")}? WORD;
-
-val: {isKeyword("val")}? WORD;
-var: {isKeyword("var")}? WORD;
-set: {isKeyword("set")}? WORD;
-let: {isKeyword("let")}? WORD;
-
-for: {isKeyword("for")}? WORD;
-if: {isKeyword("if")}? WORD;
-while: {isKeyword("while")}? WORD;
-match: {isKeyword("match")}? WORD;
-with: {isKeyword("with")}? WORD;
-then: {isKeyword("then")}? WORD;
-else: {isKeyword("else")}? WORD;
-do: {isKeyword("do")}? WORD;
-yield: {isKeyword("yield")}? WORD;
 
 // ----------------------------------------------------------------------------
 
@@ -167,11 +122,11 @@ rawBlock:
 	LTUPLE ~RTUPLE+? RTUPLE
 	| LARRAY ~RARRAY+? RARRAY
 	| LSET ~RSET+? RSET;
-block:
+stmtBlock:
 	LTUPLE stmts RTUPLE
 	| LARRAY stmts RARRAY
 	| LSET stmts RSET;
-idStart: WORD;
+idHead: WORD;
 word: (WORD | DIGIT)+;
 
 sl: SPACE | TAB;

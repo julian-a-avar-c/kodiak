@@ -19,360 +19,154 @@ class ParserVisitor extends KodiakParserBaseVisitor[Ast | Null]:
   // --------------------------------------------------------------------------
 
   override def visitProgram(ctx: ProgramContext | Null): Ast.Program =
-    boundary:
-      if ctx == null then break(Ast.Program.empty)
-      val stmts = visitStmts(ctx.nn.stmts())
-      if stmts == null then break(Ast.Program.empty)
-      Ast.Program(stmts)
+    val stmts = visitStmts(ctx.nn.stmts())
+    Ast.Program(stmts.nn)
 
-  override def visitStmts(ctx: StmtsContext | Null): Ast.Stmts =
-    boundary:
-      if ctx == null then break(Ast.Stmts.empty)
-      val stmtSeq =
-        ctx.nn
-          .stmt()
-          .asScala
-          .toSeq
-          .map(visitStmt)
-          .collect { case stmt: Ast.Stmt => stmt }
-      Ast.Stmts(stmtSeq*)
+  override def visitStmts(ctx: StmtsContext | Null): Ast.Stmts | Null =
+    val stmts = ctx.nn
+      .stmt()
+      .asScala
+      .toSeq
+      .map(visitStmt)
+      .collect { case stmt: Ast.Stmt => stmt }
+    Ast.Stmts(stmts*)
+  end visitStmts
 
-  override def visitStmt(ctx: StmtContext | Null): Ast.Stmt | Null =
-    boundary:
-      if ctx == null then break(null)
+  override def visitStmt(ctx: StmtContext | Null): Ast.Stmt =
+    visitExpr(ctx.nn.expr())
 
-      var result: Ast.Stmt | Null = null
-      lazy val expr               = ctx.nn.expr()
-      if expr != null then result = visitExpr(expr)
+  override def visitExpr(ctx: ExprContext): Ast.Expr =
+    lazy val group      = Option(ctx.group()).map(visitGroup)
+    lazy val collection = Option(ctx.collection()).map(visitCollection)
+    lazy val app        = Option(ctx.app()).map(visitApp)
 
-      result
+    Seq(
+      group,
+      collection,
+      app,
+    ).find(_.isDefined).flatten.get
+  end visitExpr
 
-  override def visitExpr(ctx: ExprContext | Null): Ast.Expr | Null =
-    boundary:
-      if ctx == null then break(null)
+  def visitApp(ctx: AppContext): Ast.Expr =
+    ctx match
+      case fnApp: FnAppContext       => visitFnApp(fnApp)
+      case pathApp: PathAppContext   => visitPathApp(pathApp)
+      case opApp: OpAppContext       => visitOpApp(opApp)
+      case exprHead: ExprHeadContext => visitExprHead(exprHead)
+      case _ => throw new RuntimeException("Unknown app type")
 
-      var result: Ast.Expr | Null = null
-      lazy val exprHead           = ctx.nn.exprHead()
-      if exprHead != null then result = visitExprHead(exprHead)
+  override def visitFnApp(ctx: FnAppContext): Ast.FnApp =
+    val fn   = visitApp(ctx.app())
+    val args =
+      ctx.args().asScala.map(visitArgs).head.asInstanceOf[Ast.Collection]
+    Ast.FnApp(fn, args)
+  end visitFnApp
 
-      result
+  override def visitPathApp(ctx: PathAppContext): Ast.PathApp =
+    val receiver = visitApp(ctx.receiver)
+    val member   = visitSimpleExpr(ctx.member)
+    Ast.PathApp(receiver, member)
+  end visitPathApp
 
-  override def visitExprHead(ctx: ExprHeadContext | Null): Ast.Expr | Null =
-    boundary:
-      if ctx == null then break(null)
+  override def visitOpApp(ctx: OpAppContext): Ast.OpApp =
+    val left  = visitApp(ctx.left)
+    val op    = visitId(ctx.op).asInstanceOf[Ast.Id] // Fix
+    val right = visitSimpleExpr(ctx.right)           // Fix
+    Ast.OpApp(left, op, right)
+  end visitOpApp
 
-      var result: Ast.Expr | Null = null
+  override def visitExprHead(ctx: ExprHeadContext | Null): Ast.Expr =
+    visitComplexExpr(ctx.nn.complexExpr())
 
-      lazy val `true`  = ctx.nn.TRUE()
-      lazy val `false` = ctx.nn.FALSE()
-      lazy val unit    = ctx.nn.UNIT()
-      lazy val integer = ctx.nn.integer()
+  override def visitComplexExpr(ctx: ComplexExprContext | Null): Ast.Expr =
+    visitSimpleExpr(ctx.nn.simpleExpr())
 
-      if `true` != null then result = Ast.True
-      if `false` != null then result = Ast.False
-      if unit != null then result = Ast.Unit
-      if integer != null then result = visitInteger(integer)
+  override def visitSimpleExpr(ctx: SimpleExprContext): Ast.Expr =
+    lazy val `true`    = Option(ctx.TRUE()).map(_ => Ast.True)
+    lazy val `false`   = Option(ctx.FALSE()).map(_ => Ast.False)
+    lazy val unit      = Option(ctx.UNIT()).map(_ => Ast.Unit)
+    lazy val decimal   = Option(ctx.decimal()).map(visitDecimal)
+    lazy val integer   = Option(ctx.integer()).map(visitInteger)
+    lazy val textBlock = Option(ctx.textBlock()).map(visitTextBlock)
+    lazy val textWord  = Option(ctx.textWord()).map(visitTextWord)
+    lazy val plainId   = Option(ctx.plainId()).map(visitPlainId)
 
-      result
+    Seq[Option[Ast.Expr]](
+      `true`,
+      `false`,
+      unit,
+      decimal,
+      integer,
+      textBlock,
+      textWord,
+      plainId,
+    ).find(_.isDefined).flatten.get
+  end visitSimpleExpr
+
+  // --------------------------------------------------------------------------
+
+  override def visitGroup(ctx: GroupContext): Ast.Expr =
+    lazy val tupleGroup = Option(ctx.tupleGroup()).map(visitTupleGroup)
+    lazy val arrayGroup = Option(ctx.arrayGroup()).map(visitArrayGroup)
+    lazy val setGroup   = Option(ctx.setGroup()).map(visitSetGroup)
+
+    Seq(
+      tupleGroup,
+      arrayGroup,
+      setGroup,
+    ).find(_.isDefined).flatten.get
+  end visitGroup
+
+  override def visitTupleGroup(ctx: TupleGroupContext): Ast.Expr =
+    visitExpr(ctx.expr())
+
+  override def visitArrayGroup(ctx: ArrayGroupContext): Ast.Expr =
+    visitExpr(ctx.expr())
+
+  override def visitSetGroup(ctx: SetGroupContext): Ast.Expr =
+    visitExpr(ctx.expr())
+
+  override def visitCollection(ctx: CollectionContext): Ast.Expr =
+    lazy val tuple = Option(ctx.tupleExpr()).map(visitTupleExpr)
+    lazy val array = Option(ctx.arrayExpr()).map(visitArrayExpr)
+    lazy val set   = Option(ctx.setExpr()).map(visitSetExpr)
+
+    Seq(
+      tuple,
+      array,
+      set,
+    ).find(_.isDefined).flatten.get
+  end visitCollection
+
+  override def visitTupleExpr(ctx: TupleExprContext): Ast.Tuple =
+    Ast.Tuple(visitCollectionItems(ctx.collectionItems()))
+
+  override def visitArrayExpr(ctx: ArrayExprContext): Ast.Array =
+    Ast.Array(visitCollectionItems(ctx.collectionItems()))
+
+  override def visitSetExpr(ctx: SetExprContext): Ast.Set =
+    Ast.Set(visitCollectionItems(ctx.collectionItems()))
+
+  override def visitCollectionItems(
+      ctx: CollectionItemsContext,
+  ): Ast.Collection.Items =
+    Ast.Collection.Items(ctx.expr().asScala.toSeq.map(visitExpr)*)
+
+  // --------------------------------------------------------------------------
+
+  override def visitDecimal(ctx: DecimalContext): Ast.Decimal =
+    Ast.Decimal(ctx.getText().toDouble)
 
   override def visitInteger(ctx: IntegerContext): Ast.Integer =
     Ast.Integer(ctx.getText().toInt)
 
-  // override def visitProgram(ctx: ProgramContext): Ast.Program =
-  //   val stmts: Ast.Stmts = visitStmts(ctx.stmts())
-  //   Ast.Program(stmts)
-  // end visitProgram
+  override def visitTextBlock(ctx: TextBlockContext): Ast.PlainText =
+    Ast.PlainText(ctx.getText().drop(2).dropRight(1))
 
-  // override def visitStmts(ctx: StmtsContext): Ast.Stmts = boundary:
-  //   if ctx == null then break(Ast.Stmts(Seq.empty*))
+  override def visitTextWord(ctx: TextWordContext): Ast.PlainText =
+    Ast.PlainText(ctx.getText().drop(1))
 
-  //   val stmtsSeq = ctx.stmt().asScala.toSeq.map(visitStmt)
-  //   Ast.Stmts(stmtsSeq*)
-  // end visitStmts
-
-  // override def visitStmtSep(ctx: StmtSepContext): Null =
-  //   null
-
-  // override def visitStmt(ctx: StmtContext): Ast.Stmt =
-  //   // lazy val decl                   = Option(ctx.decl()).map(visitDecl)
-  //   lazy val ifStmt: Option[Ast.If] =
-  //     ??? // Option(ctx.ifStmt()).map(visitIfStmt)
-  //   lazy val whileStmt: Option[Ast.While] =
-  //     ??? // Option(ctx.whileStmt()).map(visitWhileStmt)
-  //   lazy val forStmt: Option[Ast.For] =
-  //     ??? // Option(ctx.forStmt()).map(visitForStmt)
-  //   lazy val expr = Option(ctx.expr()).map(visitExpr)
-  //   Seq(
-  //     // decl,
-  //     // ifStmt, whileStmt, forStmt,
-  //     expr,
-  //   )
-  //     .find(_.isDefined)
-  //     .flatten
-  //     .get
-  // end visitStmt
-
-  // override def visitDecl(ctx: DeclContext): Ast.Decl =
-  //   lazy val valDecl = Option(ctx.valDecl()).map(visitValDecl)
-  //   Seq(
-  //     valDecl,
-  //   )
-  //     .find(_.isDefined)
-  //     .flatten
-  //     .get
-  // end visitDecl
-
-  // override def visitValDecl(ctx: ValDeclContext): Ast.ValDecl =
-  //   val id    = visitId(ctx.id())
-  //   val op    = Ast.Id("=")
-  //   val value = visitExpr(ctx.expr())
-  //   Ast.ValDecl(id, op, value)
-  // end visitValDecl
-
-  // override def visitVarDecl(ctx: VarDeclContext) =
-  //   visitChildren(ctx)
-
-  // override def visitSetDecl(ctx: SetDeclContext) =
-  //   visitChildren(ctx)
-
-  // override def visitEqDeclOp(ctx: EqDeclOpContext) =
-  //   visitChildren(ctx)
-
-  // override def visitPlainEqDeclOp(ctx: PlainEqDeclOpContext) =
-  //   visitChildren(ctx)
-
-  // override def visitRawEqDeclOp(ctx: RawEqDeclOpContext) =
-  //   visitChildren(ctx)
-
-  // // TODO
-  // override def visitExpr(ctx: ExprContext): Ast.Expr =
-  //   lazy val `if`: Option[Ast.If]       = ??? // Option(ctx.if_()).map(visitIf)
-  //   lazy val `match`: Option[Ast.Match] =
-  //     ??? // Option(ctx.`match`()).map(visitMatch)
-  //   lazy val `for`: Option[Ast.For]     =
-  //     ??? // Option(ctx.for_()).map(visitFor)
-  //   // lazy val fnApp: Option[Ast.FnApp]   =
-  //   //   Option(ctx.fnApp()).map(visitFnApp)
-  //   // lazy val opApp: Option[Ast.FnApp] =
-  //   //   Option(ctx.opApp()).map(visitOpApp)
-  //   lazy val pathApp: Option[Ast.PathApp] =
-  //     ??? // Option(ctx.pathApp()).map(visitPathApp)
-  //   lazy val exprHead: Option[Ast.Expr] =
-  //     Option(ctx.exprHead()).map(visitExprHead)
-  //   Seq(
-  //     // `if`, `match`, `for`, fnApp, opApp, pathApp,
-  //     exprHead,
-  //   )
-  //     .find(_.isDefined)
-  //     .flatten
-  //     .get
-  // end visitExpr
-
-  // override def visitIfStmt(ctx: IfStmtContext) =
-  //   visitChildren(ctx)
-
-  // override def visitIf(ctx: IfContext) =
-  //   visitChildren(ctx)
-
-  // override def visitMatch(ctx: MatchContext) =
-  //   visitChildren(ctx)
-
-  // override def visitMatchBranch(ctx: MatchBranchContext) =
-  //   visitChildren(ctx)
-
-  // override def visitForStmt(ctx: ForStmtContext) =
-  //   visitChildren(ctx)
-
-  // override def visitFor(ctx: ForContext) =
-  //   visitChildren(ctx)
-
-  // override def visitForEnumerator(ctx: ForEnumeratorContext) =
-  //   visitChildren(ctx)
-
-  // override def visitWhileStmt(ctx: WhileStmtContext) =
-  //   visitChildren(ctx)
-
-  // override def visitFnApp(ctx: FnAppContext): Ast.FnApp =
-  //   val fn   = visitExprHead(ctx.exprHead())
-  //   val args = visitCollection(ctx.collection())
-  //   Ast.FnApp(fn, args)
-  // end visitFnApp
-
-  // override def visitOpApp(ctx: OpAppContext): Ast.FnApp =
-  //   val fn   = visitId(ctx.id())
-  //   val args = Ast.Tuple(
-  //     Ast.Collection.Items(
-  //       ctx.exprHead().asScala.toSeq.map(visitExprHead),
-  //     ),
-  //   )
-  //   Ast.FnApp(fn, args)
-  // end visitOpApp
-
-  // override def visitPathApp(ctx: PathAppContext) =
-  //   visitChildren(ctx)
-
-  // override def visitStaticPathApp(ctx: StaticPathAppContext) =
-  //   visitChildren(ctx)
-
-  // override def visitIndexPathApp(ctx: IndexPathAppContext) =
-  //   visitChildren(ctx)
-
-  // override def visitExprHead(ctx: ExprHeadContext): Ast.Expr =
-  //   println(Console.RED)
-  //   println(">")
-  //   println(s"> ${ctx.getText()}")
-  //   println(">")
-  //   println(Console.RESET)
-
-  //   lazy val `true`  = Option.fromNullable(ctx.TRUE()).map(_ => Ast.True)
-  //   lazy val `false` = Option.fromNullable(ctx.FALSE()).map(_ => Ast.False)
-  //   lazy val unit    = Option.fromNullable(ctx.UNIT()).map(_ => Ast.Unit)
-  //   // lazy val plainText = Option(ctx.plainText()).map(visitPlainText)
-  //   // lazy val decimal   = Option(ctx.decimal()).map(visitDecimal)
-  //   lazy val integer = Option.fromNullable(ctx.integer()).map(visitInteger)
-  //   // lazy val plainId   = Option(ctx.plainId()).map(visitPlainId)
-  //   Seq(
-  //     `true`,
-  //     `false`,
-  //     unit,
-  //     // plainText,
-  //     // decimal,
-  //     integer,
-  //     // plainId
-  //   )
-  //     .find(_.isDefined)
-  //     .flatten
-  //     .get
-  // end visitExprHead
-
-  // override def visitBlock(ctx: BlockContext) =
-  //   visitChildren(ctx)
-
-  // // --------------------------------------------------------------------------
-
-  // override def visitArgs(ctx: ArgsContext) =
-  //   visitChildren(ctx)
-
-  // override def visitGroup(ctx: GroupContext) =
-  //   visitChildren(ctx)
-
-  // override def visitCollection(ctx: CollectionContext): Ast.Collection =
-  //   lazy val tuple = Option(ctx.tuple()).map(visitTuple)
-  //   lazy val array = Option(ctx.array()).map(visitArray)
-  //   lazy val set   = Option(ctx.set()).map(visitSet)
-  //   Seq(tuple, array, set)
-  //     .find(_.isDefined)
-  //     .flatten
-  //     .get
-  // end visitCollection
-
-  // override def visitTupleGroup(ctx: TupleGroupContext): Ast.Expr =
-  //   visitExpr(ctx.expr())
-
-  // override def visitArrayGroup(ctx: ArrayGroupContext): Ast.Expr =
-  //   visitExpr(ctx.expr())
-
-  // override def visitSetGroup(ctx: SetGroupContext): Ast.Expr =
-  //   visitExpr(ctx.expr())
-
-  // override def visitTuple(ctx: TupleContext): Ast.Tuple =
-  //   val collectionItems = visitCollectionItems(ctx.collectionItems())
-  //   Ast.Tuple(collectionItems)
-
-  // override def visitArray(ctx: ArrayContext): Ast.Array =
-  //   val collectionItems = visitCollectionItems(ctx.collectionItems())
-  //   Ast.Array(collectionItems)
-
-  // override def visitSet(ctx: SetContext): Ast.Set =
-  //   val collectionItems = visitCollectionItems(ctx.collectionItems())
-  //   Ast.Set(collectionItems)
-
-  // override def visitCollectionItems(
-  //     ctx: CollectionItemsContext,
-  // ): Ast.Collection.Items =
-  //   Ast.Collection.Items(ctx.expr().asScala.toSeq.map(visitExpr))
-
-  // override def visitCollectionSep(ctx: CollectionSepContext) =
-  //   visitChildren(ctx)
-
-  // // TODO: fix later.
-  // override def visitInteger(ctx: IntegerContext): Ast.Integer =
-  //   Ast.Integer(ctx.getText().toInt)
-  // end visitInteger
-
-  // // TODO: fix later.
-  // override def visitDecimal(ctx: DecimalContext): Ast.Decimal =
-  //   Ast.Decimal(ctx.getText().toDouble)
-
-  // override def visitRawNumber(ctx: RawNumberContext) =
-  //   visitChildren(ctx)
-
-  // override def visitRawNumberBlock(ctx: RawNumberBlockContext) =
-  //   visitChildren(ctx)
-
-  // override def visitRawNumberWord(ctx: RawNumberWordContext) =
-  //   visitChildren(ctx)
-
-  // override def visitPlainText(ctx: PlainTextContext): Ast.Text =
-  //   lazy val plainTextBlock =
-  //     ??? // Option(ctx.plainTextBlock()).map(visitPlainTextBlock)
-  //   lazy val plainTextWord =
-  //     Option(ctx.plainTextWord()).map(visitPlainTextWord)
-  //   Seq(
-  //     // plainTextBlock,
-  //     plainTextWord,
-  //   )
-  //     .find(_.isDefined)
-  //     .flatten
-  //     .get
-  // end visitPlainText
-
-  // override def visitPlainTextBlock(ctx: PlainTextBlockContext) =
-  //   visitChildren(ctx)
-
-  // override def visitPlainTextWord(ctx: PlainTextWordContext): Ast.Text =
-  //   Ast.Text(ctx.WORD().asScala.mkString(""))
-
-  // // TODO: Add additional cases
-  // override def visitId(ctx: IdContext): Ast.Id =
-  //   visitPlainId(ctx.plainId())
-
-  // override def visitPlainId(ctx: PlainIdContext): Ast.Id =
-  //   Ast.Id(ctx.getText())
-
-  // override def visitRawId(ctx: RawIdContext) =
-  //   visitChildren(ctx)
-
-  // override def visitRawIdWord(ctx: RawIdWordContext) =
-  //   visitChildren(ctx)
-
-  // override def visitRawIdBlock(ctx: RawIdBlockContext) =
-  //   visitChildren(ctx)
-
-  // // --------------------------------------------------------------------------
-
-  // override def visitChildren(node: RuleNode) =
-  //   var result = defaultResult()
-  //   val n      = node.getChildCount()
-  //   for i <- 0 until n do
-  //     boundary {
-  //       if !shouldVisitNextChild(node, result)
-  //       then break()
-  //       val c           = node.getChild(i)
-  //       val childResult = c.accept(this)
-  //       result = aggregateResult(result, childResult)
-  //     }
-  //   end for
-
-  //   result
-  // end visitChildren
-
-  // override def defaultResult() = null
-
-  // override def shouldVisitNextChild(node: RuleNode, currentResult: Ast | Null) =
-  //   true
-
-  // override def aggregateResult(aggregate: Ast | Null, nextResult: Ast | Null) =
-  //   nextResult
+  override def visitPlainId(ctx: PlainIdContext): Ast.Id =
+    Ast.Id(ctx.getText())
 
 end ParserVisitor

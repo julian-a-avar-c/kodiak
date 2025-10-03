@@ -4,63 +4,46 @@ case class ParserException(message: String) extends Exception(message)
 
 sealed trait Ast
 object Ast:
-  case class Program(stmts: Stmts) extends Ast
-  case class Stmts(stmt: Stmt*)    extends Ast
-  sealed trait Stmt                extends Ast
-  sealed trait Ctl                 extends Ast
+  case class Program(stmts: Ast.Stmts) extends Ast
+  case class Stmts(value: Stmt*)       extends Ast
+  sealed trait Stmt                    extends Ast
   object Program:
-    inline def empty = Program(Stmts.empty)
-  object Stmts:
-    inline def empty = Stmts(Seq.empty*)
+    def apply(stmts: Ast.Stmt*): Ast.Program = Ast.Program(Ast.Stmts(stmts*))
+    def empty                                = Ast.Program(Ast.Stmts())
 
-  sealed trait Decl extends Stmt
   sealed trait Expr extends Stmt
 
-  case class ValDecl(id: Ast.Id, eq: Ast.Id, expr: Ast.Expr) extends Decl
+  case object Unit            extends Expr
+  case class Id(name: String) extends Expr
+  sealed trait Boolean        extends Expr
+  sealed trait Text           extends Expr
+  sealed trait Number         extends Expr
+  sealed trait Collection     extends Expr
+  sealed trait App            extends Expr
 
-  case object Unit                           extends Expr
-  sealed trait Boolean(value: scala.Boolean) extends Expr
-  case class Text(value: String)             extends Expr
-  sealed trait Collection                    extends Expr
-  sealed trait Number                        extends Expr
-  case class Id(value: String)               extends Expr
-  sealed trait App                           extends Expr
+  case object True  extends Expr
+  case object False extends Expr
 
-  case object True  extends Boolean(true)
-  case object False extends Boolean(false)
+  case class PlainText(value: String)                       extends Text
+  case class RawText(interpolator: Ast.Expr, value: String) extends Text
+
+  case class Integer(value: Int)                              extends Number
+  case class Decimal(value: Double)                           extends Number
+  case class RawNumber(interpolator: Ast.Expr, value: String) extends Number
+
+  case class FnApp(fn: Expr, args: Ast.Collection)      extends App
+  case class PathApp(receiver: Expr, member: Ast.Expr)  extends App
+  case class OpApp(left: Expr, op: Ast.Id, right: Expr) extends App
 
   case class Tuple(items: Collection.Items) extends Collection
   case class Array(items: Collection.Items) extends Collection
   case class Set(items: Collection.Items)   extends Collection
   object Collection:
-    case class Items(seq: Seq[Ast.Expr]) extends Ast
-
-  case class Decimal(value: Double)                extends Number
-  case class Integer(value: Int)                   extends Number
-  case class MetaNumber(fn: Ast.Id, value: String) extends Number
-
-  case class FnApp(fn: Ast.Expr, args: Ast.Collection) extends App
-  case class PathApp(fn: Ast.Expr, path: Ast.Id)       extends App
-
-  case class If(cond: Ast.Expr, thenBranch: Ast.Expr, elseBranch: Ast.Expr)
-      extends Expr,
-        Ctl
-  case class Match(cond: Ast.Expr, branches: Seq[Match.Branch])
-      extends Expr,
-        Ctl
-  case class For(generators: Seq[For.Generator], body: Ast.Expr)
-      extends Expr,
-        Ctl
-  case class While(cond: Ast.Expr, body: Ast.Expr) extends Stmt, Ctl
-
-  object Match:
-    case class Branch(pattern: Match.Pattern, expr: Ast.Expr) extends Ast
-    sealed trait Pattern                                      extends Ast
-    case class Else(value: Ast.Expr)                          extends Pattern
-  end Match
-
-  object For:
-    case class Generator(id: Ast.Id, expr: Ast.Expr) extends Ast
-  end For
-
+    class Items(value: Expr*) extends Ast
+  object Tuple:
+    def apply(items: Expr*): Ast.Tuple = Ast.Tuple(Ast.Collection.Items(items*))
+  object Array:
+    def apply(items: Expr*): Ast.Array = Ast.Array(Ast.Collection.Items(items*))
+  object Set:
+    def apply(items: Expr*): Ast.Set = Ast.Set(Ast.Collection.Items(items*))
 end Ast
