@@ -10,13 +10,8 @@ import org.antlr.v4.runtime.tree.IterativeParseTreeWalker
 
 object Main:
   def main(args: Array[String]): Unit =
-    val inputStream       = CharStreams.fromString("2 + 3 / 7")
-    val kodiakLexer       = new KodiakLexer(inputStream)
-    val commonTokenStream = new CommonTokenStream(kodiakLexer)
-    val kodiakParser      = new KodiakParser(commonTokenStream)
-    val programContext    = kodiakParser.program()
-    val listener          = new ParserListener
-    val visitor           = new ParserVisitor
-    println(visitor.visitProgram(programContext))
+    val input = "2 + 3 / 7"
+
+    println(MyParser.parse(input).nn.program())
   end main
 end Main

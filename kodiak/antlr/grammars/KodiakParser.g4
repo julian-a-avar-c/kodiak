@@ -7,40 +7,48 @@ options {
 // Program Structure
 program: ws* stmts ws* EOF;
 stmts: stmt? (stmtSep stmt?)* stmtSep?;
-stmt: expr | decl;
+stmt: decl | anyExpr;
 stmtSep: (sl* (SEMI | nl)+ sl*)+;
 
 decl: valDecl | varDecl | setDecl;
-valDecl: VAL sl+ assignment;
-varDecl: VAR sl+ assignment;
-setDecl: SET sl+ assignment;
-letDecl: LET sl+ assignment;
-assignment: id sl+ EQ ws+ expr;
+valDecl: VAL ssws assignment;
+varDecl: VAR ssws assignment;
+setDecl: SET ssws assignment;
+letDecl: LET ssws assignment;
+assignment: id ssws (type ssws)? EQ ssws (anyExpr | stmtBlock);
+collectionAssignment: (
+		WITH fnExpr
+		| group
+		| anyCollection
+		| simpleExpr
+	) ssws EQ ssws stmtBlock;
 
-expr: group | collection | app;
+anyExpr: ctlExpr | fnExpr | expr;
 
-app:
-	app (sl* args)+										# fnApp
-	| receiver = app (ws* DOT sl* member = simpleExpr)+		# pathApp
-	| left = app sl+ (op = id sl+ right = simpleExpr)+	# opApp
-	| complexExpr										# exprHead;
+expr:
+	group										# groupExpr
+	| anyCollection								# collectionExpr
+	| expr ssws? args							# implicitApplicationExpr
+	| expr ssws? BACKSLASH ssws? (args | expr)	# explicitApplicationExpr
+	| expr ssws id ssws expr					# operationApplication
+	| simpleExpr								# exprHead;
 
-complexExpr: ctl | fn | simpleExpr;
+type: COLON ssws? (group | anyCollection | simpleExpr);
 
-ctl: ifExpr | matchExpr | forExpr | whileExpr;
+ctlExpr: ifExpr | matchExpr | forExpr | whileExpr;
 ifExpr:
-	IF ws+ app ws+ THEN ws+ expr (ws+ ELSE ws+ expr)* (
-		ws+ END SPACE IF
+	IF ws+ expr ws+ THEN ws+ expr (ws+ ELSE ws+ expr)* (
+		ws+ END ssws IF
 	)?;
 matchExpr:
-	MATCH ws+ app (ws+ matchBranch)+ (ws+ END SPACE MATCH)?;
+	MATCH ws+ expr (ws+ matchBranch)+ (ws+ END ssws MATCH)?;
 matchBranch: matchBranchPatternWith | matchBranchPatternElse;
 matchBranchPatternWith:
-	WITH ws+ simpleExpr ws+ THEN ws+ expr (ws+ END SPACE CASE)?;
-matchBranchPatternElse: ELSE ws+ expr (ws+ END SPACE CASE)?;
+	WITH ws+ simpleExpr ws+ THEN ws+ expr (ws+ END ssws CASE)?;
+matchBranchPatternElse: ELSE ws+ expr (ws+ END ssws CASE)?;
 forExpr:
 	FOR ws+ generatorStmts ws+ (DO | YIELD) ws+ expr (
-		ws+ END SPACE FOR
+		ws+ END ssws FOR
 	)?;
 generatorStmts:
 	assignment
@@ -48,9 +56,13 @@ generatorStmts:
 generatorStmt: (letDecl | valDecl) (ws+ generatorConditional)?;
 generatorConditional: IF ws+ expr;
 whileExpr:
-	WHILE ws+ expr ws+ DO ws+ expr (ws+ END SPACE WHILE)?;
+	WHILE ws+ expr ws+ DO ws+ expr (ws+ END ssws WHILE)?;
 
-fn: args ws* FAT_ARROW ws* expr;
+fnExpr:
+	(simpleExpr | group | args) ws* FAT_ARROW ws* (
+		stmtBlock
+		| anyExpr
+	);
 
 simpleExpr:
 	TRUE
@@ -80,26 +92,69 @@ simpleExpr:
 // ----------------------------------------------------------------------------
 
 args: tupleArgs | arrayArgs | setArgs;
-tupleArgs: tupleGroup | LTUPLE ws* collectionItems ws* RTUPLE;
-arrayArgs: arrayGroup | LARRAY ws* collectionItems ws* RARRAY;
-setArgs: setGroup | LSET ws* collectionItems ws* RSET;
-
 group: tupleGroup | arrayGroup | setGroup;
-tupleGroup: LTUPLE ws* expr ws* RTUPLE;
-arrayGroup: LARRAY ws* expr ws* RARRAY;
-setGroup: LSET ws* expr ws* RSET;
+anyCollection:
+	collection
+	| namedCollection
+	| someNamedCollection;
 
 collection: tupleExpr | arrayExpr | setExpr;
-tupleExpr: DOT LTUPLE ws* collectionItems ws* RTUPLE;
-arrayExpr: DOT LARRAY ws* collectionItems ws* RARRAY;
-setExpr: DOT LSET ws* collectionItems ws* RSET;
+namedCollection: namedTupleExpr | namedArrayExpr | namedSetExpr;
+someNamedCollection:
+	someNamedTupleExpr
+	| someNamedArrayExpr
+	| someNamedSetExpr;
+
+tupleArgs:
+	tupleGroup
+	| tupleExpr
+	| namedTupleExpr
+	| someNamedTupleExpr;
+arrayArgs:
+	arrayGroup
+	| arrayExpr
+	| namedArrayExpr
+	| someNamedArrayExpr;
+setArgs:
+	setGroup
+	| setExpr
+	| namedSetExpr
+	| someNamedSetExpr;
+
+tupleGroup: LTUPLE ws* anyExpr ws* RTUPLE;
+arrayGroup: LARRAY ws* anyExpr ws* RARRAY;
+setGroup: LSET ws* anyExpr ws* RSET;
+
+tupleExpr: LTUPLE ws* collectionItems ws* RTUPLE;
+arrayExpr: LARRAY ws* collectionItems ws* RARRAY;
+setExpr: LSET ws* collectionItems ws* RSET;
+namedTupleExpr: LTUPLE ws* namedCollectionItems ws* RTUPLE;
+namedArrayExpr: LARRAY ws* namedCollectionItems ws* RARRAY;
+namedSetExpr: LSET ws* namedCollectionItems ws* RSET;
+someNamedTupleExpr:
+	LTUPLE ws* someNamedCollectionItems ws* RTUPLE;
+someNamedArrayExpr:
+	LARRAY ws* someNamedCollectionItems ws* RARRAY;
+someNamedSetExpr: LSET ws* someNamedCollectionItems ws* RSET;
+
 collectionItems:
 	// Empty
 	COMMA?
 	// One item
-	| expr ws* COMMA
+	| anyExpr ws* COMMA
 	// Multiple items
-	| expr (ws* COMMA ws* expr)+ (ws* COMMA)?;
+	| anyExpr (ws* COMMA ws* anyExpr)+ (ws* COMMA)?;
+namedCollectionItems:
+	// Empty
+	EQ
+	// Multiple items
+	| collectionAssignment (ws* COMMA ws* collectionAssignment)* (
+		ws* COMMA
+	)?;
+someNamedCollectionItems:
+	(anyExpr | collectionAssignment) (
+		ws* COMMA ws* (anyExpr | collectionAssignment)
+	)+ (ws* COMMA)?;
 
 // ----------------------------------------------------------------------------
 
@@ -123,11 +178,11 @@ rawBlock:
 	| LARRAY ~RARRAY+? RARRAY
 	| LSET ~RSET+? RSET;
 stmtBlock:
-	LTUPLE stmts RTUPLE
-	| LARRAY stmts RARRAY
-	| LSET stmts RSET;
+	(id? AT)? LTUPLE ws* stmts ws* RTUPLE
+	| (id? AT)? LARRAY ws* stmts ws* RARRAY
+	| (id? AT)? LSET ws* stmts ws* RSET;
 idHead: WORD;
-word: (WORD | DIGIT)+;
+word: (WORD | DIGIT | DASH)+;
 
 sl: SPACE | TAB;
 nl: RETURN | NEW_LINE;

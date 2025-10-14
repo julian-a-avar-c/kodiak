@@ -3,7 +3,8 @@ lexer grammar KodiakLexer;
 // Comments
 SINGLE_LINE_COMMENT:
 	'{?}' ~[\r\n]*;
-MULTI_LINE_COMMENT: '{?' .*? '?}';
+MULTI_LINE_COMMENT:
+	'{?' .*? '?}';
 
 // Simple literals
 TRUE: 'true';

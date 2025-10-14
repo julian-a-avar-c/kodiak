@@ -16,7 +16,7 @@ abstract class ParserSpec extends UnitSpec:
   inline def assertParse[A](
       input: String,
       expected: A,
-      // parser: P[?] ?=> P[A],
+      selectParser: KodiakParser => KodiakParserContext = _.program(),
   )(using
       prettifier: Prettifier,
       pos: Position,
@@ -36,18 +36,10 @@ abstract class ParserSpec extends UnitSpec:
     //     // fail(s"${extra.trace(enableLogging = true).longAggregateMsg}")
     //     fail(s"Unexpected exception: ${e.getMessage}")
     // end try
-    // assert(true)
-    val inputStream       = CharStreams.fromString(input)
-    val kodiakLexer       = new KodiakLexer(inputStream)
-    val commonTokenStream = new CommonTokenStream(kodiakLexer)
-    val kodiakParser      = new KodiakParser(commonTokenStream)
-    // println(5)
-    val programContext = kodiakParser.program()
-    val listener       = new ParserListener
-    val visitor        = new ParserVisitor
-    // println(visitor.visitProgram(programContext))
-    // println(8)
-    assert(visitor.visitProgram(programContext) == expected)
+
+    assert(
+      MyParser.parse(input).nn.program().nn == expected,
+    )
   end assertParse
 
 end ParserSpec

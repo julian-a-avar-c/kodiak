@@ -1,4 +1,4 @@
-// Generated from /home/julian-a-avar-c/Dev/sandbox/kodiak/kodiak/antlr/grammars/KodiakLexer.g4 by ANTLR 4.13.1
+// Generated from /home/julian-a-avar-c/Desktop/kodiak/kodiak/antlr/grammars/KodiakLexer.g4 by ANTLR 4.13.1
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
