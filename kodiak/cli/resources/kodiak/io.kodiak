@@ -1,3 +1,0 @@
-package kodiak
-
-func printline(msg :text) => extern

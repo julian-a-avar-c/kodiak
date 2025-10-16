@@ -1,4 +1,0 @@
-name = "Kodiak"
-grammar = "kodiak"
-path_suffixes = ["kodiak"]
-line_comments = ["{?}"]
