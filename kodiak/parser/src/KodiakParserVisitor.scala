@@ -34,6 +34,36 @@ class KodiakParserVisitor
     ctx match
       case null                 => None
       case ctx: ExprHeadContext =>
+        val rawNumberBlock = Option.fromNullable(ctx.rawNumberBlock())
+        val rawNumberWord  = Option.fromNullable(ctx.rawNumberWord())
+        val textBlock      = Option.fromNullable(ctx.textBlock())
+        val textWord       = Option.fromNullable(ctx.textWord())
+        val rawIdBlock     = Option.fromNullable(ctx.rawIdBlock())
+        val rawIdWord      = Option.fromNullable(ctx.rawIdWord())
+        val decimal        = Option.fromNullable(ctx.decimal())
+        val integer        = Option.fromNullable(ctx.integer())
+        val plainId        = Option.fromNullable(ctx.plainId())
+        if rawIdBlock.nonEmpty then
+          val value =
+            if rawNumberBlock.nonEmpty
+            then Ast.RawNumber(rawIdBlock, Some(rawNumberBlock.get.getText()))
+            else if rawNumberWord.nonEmpty
+            then Ast.RawNumber(rawIdBlock, Some(rawNumberWord.get.getText()))
+            else if textBlock.nonEmpty
+            then Ast.ComplexText(rawIdBlock, Some(textBlock.get.getText()))
+            else if textWord.nonEmpty
+            then Some(textWord.get.getText())
+            else None
+        end if
+
+        if rawIdWord != null then
+          if rawIdWord != null && rawNumberBlock != null then ???
+          else if rawIdWord != null && rawNumberWord != null then ???
+          else if rawIdWord != null && textBlock != null then ???
+          else if rawIdWord != null && textWord != null then ???
+          else ???
+          end if
+        end if
         Seq(
           visitRawNumberBlock(ctx.rawNumberBlock()),
           visitRawNumberWord(ctx.rawNumberWord()),

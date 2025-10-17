@@ -53,10 +53,14 @@ class ParserSpec extends AnyFunSuite with Matchers:
   test("Integer") {
     setup("1")(Ast.Program(Ast.Stmts(Seq(Ast.Integer(1)))))
     setup("12")(Ast.Program(Ast.Stmts(Seq(Ast.Integer(12)))))
+    setup("-1")(Ast.Program(Ast.Stmts(Seq(Ast.Integer(-1)))))
+    setup("-12")(Ast.Program(Ast.Stmts(Seq(Ast.Integer(-12)))))
   }
   test("Decimal") {
     setup("1.2")(Ast.Program(Ast.Stmts(Seq(Ast.Decimal(1.2)))))
     setup("12.34")(Ast.Program(Ast.Stmts(Seq(Ast.Decimal(12.34)))))
+    setup("-1.2")(Ast.Program(Ast.Stmts(Seq(Ast.Decimal(-1.2)))))
+    setup("-12.34")(Ast.Program(Ast.Stmts(Seq(Ast.Decimal(-12.34)))))
   }
   test("Raw Number Word") {
     setup("#1")(Ast.Program(Ast.Stmts(Seq(Ast.RawNumber("1")))))
@@ -78,6 +82,22 @@ class ParserSpec extends AnyFunSuite with Matchers:
     setup("#a4.a4")(Ast.Program(Ast.Stmts(Seq(Ast.RawNumber("a4.a4")))))
     setup("#~4.~4")(Ast.Program(Ast.Stmts(Seq(Ast.RawNumber("~4.~4")))))
     setup("#4a.4a")(Ast.Program(Ast.Stmts(Seq(Ast.RawNumber("4a.4a")))))
+
+    setup("a#b")(
+      Ast.Program(Ast.Stmts(Seq(Ast.RawNumber(Some(Ast.Id("a")), "b")))),
+    )
+    setup("`a#b")(
+      Ast.Program(Ast.Stmts(Seq(Ast.RawNumber(Some(Ast.Id("a")), "b")))),
+    )
+    setup("`(a)#b")(
+      Ast.Program(Ast.Stmts(Seq(Ast.RawNumber(Some(Ast.Id("a")), "b")))),
+    )
+    setup("`[a]#b")(
+      Ast.Program(Ast.Stmts(Seq(Ast.RawNumber(Some(Ast.Id("a")), "b")))),
+    )
+    setup("`{a}#b")(
+      Ast.Program(Ast.Stmts(Seq(Ast.RawNumber(Some(Ast.Id("a")), "b")))),
+    )
   }
   test("Raw Number Block") {
     setup("#(abc)")(Ast.Program(Ast.Stmts(Seq(Ast.RawNumber("abc")))))
