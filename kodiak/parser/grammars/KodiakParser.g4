@@ -10,32 +10,34 @@ stmts: expr (stmtSep+ expr)*;
 stmtSep: SEMI;
 
 expr:
-    exprHead;
+    expr sl anyId sl expr # opApp
+    | simpleExpr # exprHead;
 
-exprHead:
-    rawNumberBlock
-    | rawNumberWord
-    | textBlock
+simpleExpr:
+    textBlock
     | textWord
-    | rawIdBlock rawIdTail?
-    | rawIdWord rawIdTail?
+    | rawNumberBlock
+    | rawNumberWord
+    | rawIdBlock idTail?
+    | rawIdWord idTail?
     | decimal
     | integer
-    | plainId;
+    | plainId idTail?
+    ;
 
-rawIdTail: rawNumberBlock | rawNumberWord | textBlock | textWord;
+idTail: textBlock | textWord | rawNumberBlock | rawNumberWord;
+
+textBlock: DOUBLE_QUOTE rawBlock;
+textWord: DOUBLE_QUOTE rawWord+;
 
 rawNumberWord: HASH rawWord+ (DOT rawWord+)*;
 rawNumberBlock: HASH rawBlock;
 decimal: DASH? DIGIT+ DOT DIGIT+;
 integer: DASH? DIGIT+;
 
-textWord: DOUBLE_QUOTE rawWord+;
-textBlock: DOUBLE_QUOTE rawBlock;
-
+anyId: rawIdBlock | rawNumberWord | plainId;
 plainId: WORD rawWord*;
-// TODO: Add more keywords
-rawIdWord: BACK_QUOTE (IF | rawWord+);
+rawIdWord: BACK_QUOTE (IF | rawWord+); // TODO: Add more keywords
 rawIdBlock: BACK_QUOTE rawBlock;
 
 rawWord: WORD | DIGIT | DASH;
@@ -44,3 +46,9 @@ rawBlock:
     | LARRAY ~RARRAY* RARRAY
     | LSET ~RSET* RSET
     ;
+
+sl: SPACE | TAB;
+nl: RETURN | NEW_LINE;
+ws: sl | nl;
+// Single Statement WS
+ssws: sl+ | sl* nl sl*;

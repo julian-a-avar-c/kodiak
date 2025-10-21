@@ -74,7 +74,7 @@ trait SharedModule extends ScalaModule, PublishModule:
     description = "Kodiak",
     organization = "kodiak",
     url = "https://github.com/julian-a-avar-c/kodiak",
-    licenses = Seq(License.`GPL-2.0`),
+    licenses = Seq(License.`BSL-1.0`),
     versionControl = VersionControl.github("julian-a-avar-c", "kodiak"),
     developers = Seq(
       Developer(

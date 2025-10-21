@@ -7,6 +7,7 @@ object Ast:
   case class Stmts(value: Seq[Expr])    extends Ast
   abstract class Expr                   extends Ast
 
+  case class OpApp(left: Ast.Expr, op: Ast.Id, right: Ast.Expr)     extends Expr
   case class Id(value: String)                                      extends Expr
   case class Integer(value: Int)                                    extends Expr
   case class Decimal(value: Double)                                 extends Expr
