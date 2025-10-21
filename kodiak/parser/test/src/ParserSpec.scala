@@ -19,6 +19,19 @@ class ParserSpec extends AnyFunSuite with Matchers:
     )
   }
 
+  test("Statements") {
+    assertParse("abc;abc")(
+      Ast.Program(Ast.Stmts(Seq(Ast.Id("abc"), Ast.Id("abc")))),
+    )
+  }
+
+  // --------------------------------------------------------------------------
+
+  test("Boolean") {
+    assertParse("true")(Ast.Program(Ast.Stmts(Seq(Ast.True))))
+    assertParse("false")(Ast.Program(Ast.Stmts(Seq(Ast.False))))
+  }
+
   test("Simple id") {
     assertParse("a")(Ast.Program(Ast.Stmts(Seq(Ast.Id("a")))))
     assertParse("ab")(Ast.Program(Ast.Stmts(Seq(Ast.Id("ab")))))
@@ -141,6 +154,36 @@ class ParserSpec extends AnyFunSuite with Matchers:
     )
     assertParse("`{a}\"b")(
       Ast.Program(Ast.Stmts(Seq(Ast.ComplexText(Some(Ast.Id("a")), "b")))),
+    )
+  }
+
+  test("If Expressions") {
+    assertParse("(if true then 1 else 0)")(
+      Ast.Program(
+        Ast.Stmts(
+          Seq(
+            Ast.If(
+              condition = Ast.True,
+              consequent = Ast.Integer(1),
+              alternative = Ast.Integer(0),
+            ),
+          ),
+        ),
+      ),
+    )
+  }
+
+  // --------------------------------------------------------------------------
+
+  test("Op App") {
+    assertParse("a a a")(
+      Ast.Program(
+        Ast.Stmts(
+          Seq(
+            Ast.OpApp(left = Ast.Id("a"), op = Ast.Id("a"), right = Ast.Id("a")),
+          ),
+        ),
+      ),
     )
   }
 end ParserSpec

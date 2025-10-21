@@ -32,11 +32,24 @@ class KodiakParserVisitor
       case null => None
       case ctx  =>
         Option.fromNullable(ctx).flatMap {
-          case ctx: ExprHeadContext => visitExprHead(ctx)
-          case ctx: OpAppContext    => visitOpApp(ctx)
+          case ctx: GroupExprContext => visitGroupExpr(ctx)
+          case ctx: OpAppContext     => visitOpApp(ctx)
+          case ctx: ExprHeadContext  => visitExprHead(ctx)
         }
 
   end visitExpr
+
+  override def visitGroupExpr(
+      ctx: GroupExprContext | Null,
+  ): Option[Ast.Expr] =
+    import scala.jdk.CollectionConverters.given
+    ctx match
+      case null => None
+      case ctx  =>
+        for expr <- Option.fromNullable(ctx.group()).flatMap(visitGroup)
+        yield expr
+    end match
+  end visitGroupExpr
 
   override def visitOpApp(ctx: OpAppContext | Null): Option[Ast.OpApp] =
     import scala.jdk.CollectionConverters.given
@@ -56,12 +69,17 @@ class KodiakParserVisitor
       case null => None
       case ctx  =>
         Option.fromNullable(ctx.simpleExpr()).flatMap(visitSimpleExpr)
+  end visitExprHead
 
   override def visitSimpleExpr(
       ctx: SimpleExprContext | Null,
   ): Option[Ast.Expr] =
     ctx match
       case ctx: SimpleExprContext =>
+        val `true`         =
+          Option.fromNullable(ctx.TRUE()).map(_ => Ast.True)
+        val `false`        =
+          Option.fromNullable(ctx.FALSE()).map(_ => Ast.False)
         val textBlock      =
           Option.fromNullable(ctx.textBlock()).flatMap(visitTextBlock)
         val textWord       =
@@ -93,6 +111,8 @@ class KodiakParserVisitor
             }
 
         Seq(
+          `true`,
+          `false`,
           textBlock,
           textWord,
           rawNumberBlock,
@@ -134,6 +154,68 @@ class KodiakParserVisitor
           .find(_.isDefined)
           .flatten
   end visitIdTail
+
+  // --------------------------------------------------------------------------
+
+  override def visitCtl(ctx: (CtlContext) | Null): (Option[Ast.If]) =
+    ctx match
+      case null => None
+      case ctx  =>
+        val `if` = Option.fromNullable(ctx.if_()).flatMap(visitIf_)
+        Seq(
+          `if`,
+        ).find(_.isDefined).flatten
+  end visitCtl
+
+  override def visitIf_(ctx: (If_Context) | Null): (Option[Ast.If]) =
+    ctx match
+      case null => None
+      case ctx  =>
+        for
+          condition   <- Option.fromNullable(ctx.expr(0)).flatMap(visitExpr)
+          consequent  <- Option.fromNullable(ctx.expr(1)).flatMap(visitExpr)
+          alternative <- Option.fromNullable(ctx.expr(2)).flatMap(visitExpr)
+        yield Ast.If(condition, consequent, alternative)
+  end visitIf_
+
+  // --------------------------------------------------------------------------
+
+  override def visitGroup(
+      ctx: GroupContext | Null,
+  ): Option[Ast.Expr] =
+    ctx match
+      case null => None
+      case ctx  =>
+        val tupleGroup =
+          Option.fromNullable(ctx.tupleGroup()).flatMap(visitTupleGroup)
+        Seq(
+          tupleGroup,
+        )
+          .find(_.isDefined)
+          .flatten
+    end match
+  end visitGroup
+
+  override def visitTupleGroup(
+      ctx: TupleGroupContext | Null,
+  ): Option[Ast.Expr] =
+    ctx match
+      case null => None
+      case ctx  =>
+        val expr =
+          Option.fromNullable(ctx.expr()).flatMap(visitExpr)
+        val ctl  =
+          Option.fromNullable(ctx.ctl()).flatMap(visitCtl)
+        Seq(
+          expr,
+          ctl,
+        )
+          .find(_.isDefined)
+          .flatten
+    end match
+  end visitTupleGroup
+
+  // --------------------------------------------------------------------------
 
   override def visitRawNumberBlock(
       ctx: RawNumberBlockContext | Null,
@@ -192,8 +274,9 @@ class KodiakParserVisitor
         val rawIdBlock =
           Option.fromNullable(ctx.rawIdBlock()).flatMap(visitRawIdBlock)
         val rawIdWord  =
-          ??? // Option.fromNullable(ctx.rawIdWord()).flatMap(visitRawIdWord)
-        val plainId = Option.fromNullable(ctx.plainId()).flatMap(visitPlainId)
+          Option.fromNullable(ctx.rawIdWord()).flatMap(visitRawIdWord)
+        val plainId    =
+          Option.fromNullable(ctx.plainId()).flatMap(visitPlainId)
 
         Seq(
           rawIdBlock,
