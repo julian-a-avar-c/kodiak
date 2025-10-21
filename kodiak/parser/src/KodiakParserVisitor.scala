@@ -3,6 +3,9 @@ package kodiak.parser
 import kodiak.antlr.KodiakParserBaseVisitor
 import kodiak.antlr.KodiakParser.*
 import scala.util.boundary, boundary.break
+import kodiak.parser.Ast.RawNumber
+import kodiak.parser.Ast.Text
+import kodiak.parser.Ast.ComplexText
 
 class KodiakParserVisitor
     extends kodiak.antlr.KodiakParserBaseVisitor[Option[Ast | Null]]:
@@ -18,8 +21,10 @@ class KodiakParserVisitor
     ctx match
       case null              => None
       case ctx: StmtsContext =>
-        for expr <- visitExpr(ctx.expr())
-        yield Ast.Stmts(Seq(expr))
+        import scala.jdk.CollectionConverters.*
+        val exprs: Seq[Ast.Expr] =
+          ctx.expr().asScala.toSeq.collect(visitExpr(_).get)
+        Some(Ast.Stmts(exprs))
   end visitStmts
 
   override def visitExpr(ctx: ExprContext | Null): Option[Ast.Expr] =
@@ -32,51 +37,76 @@ class KodiakParserVisitor
 
   override def visitExprHead(ctx: ExprHeadContext | Null): Option[Ast.Expr] =
     ctx match
-      case null                 => None
       case ctx: ExprHeadContext =>
-        val rawNumberBlock = Option.fromNullable(ctx.rawNumberBlock())
-        val rawNumberWord  = Option.fromNullable(ctx.rawNumberWord())
-        val textBlock      = Option.fromNullable(ctx.textBlock())
-        val textWord       = Option.fromNullable(ctx.textWord())
-        val rawIdBlock     = Option.fromNullable(ctx.rawIdBlock())
-        val rawIdWord      = Option.fromNullable(ctx.rawIdWord())
-        val decimal        = Option.fromNullable(ctx.decimal())
-        val integer        = Option.fromNullable(ctx.integer())
-        val plainId        = Option.fromNullable(ctx.plainId())
-        if rawIdBlock.nonEmpty then
-          val value =
-            if rawNumberBlock.nonEmpty
-            then Ast.RawNumber(rawIdBlock, Some(rawNumberBlock.get.getText()))
-            else if rawNumberWord.nonEmpty
-            then Ast.RawNumber(rawIdBlock, Some(rawNumberWord.get.getText()))
-            else if textBlock.nonEmpty
-            then Ast.ComplexText(rawIdBlock, Some(textBlock.get.getText()))
-            else if textWord.nonEmpty
-            then Some(textWord.get.getText())
-            else None
-        end if
+        val rawNumberBlock =
+          Option.fromNullable(ctx.rawNumberBlock()).flatMap(visitRawNumberBlock)
+        val rawNumberWord =
+          Option.fromNullable(ctx.rawNumberWord()).flatMap(visitRawNumberWord)
+        val textBlock =
+          Option.fromNullable(ctx.textBlock()).flatMap(visitTextBlock)
+        val textWord =
+          Option.fromNullable(ctx.textWord()).flatMap(visitTextWord)
+        val rawIdBlock =
+          Option.fromNullable(ctx.rawIdBlock()).flatMap(visitRawIdBlock)
+        val rawIdWord =
+          Option.fromNullable(ctx.rawIdWord()).flatMap(visitRawIdWord)
+        val rawIdTail =
+          Option.fromNullable(ctx.rawIdTail()).flatMap(visitRawIdTail)
+        val decimal =
+          Option.fromNullable(ctx.decimal()).flatMap(visitDecimal)
+        val integer =
+          Option.fromNullable(ctx.integer()).flatMap(visitInteger)
+        val plainId =
+          Option.fromNullable(ctx.plainId()).flatMap(visitPlainId)
 
-        if rawIdWord != null then
-          if rawIdWord != null && rawNumberBlock != null then ???
-          else if rawIdWord != null && rawNumberWord != null then ???
-          else if rawIdWord != null && textBlock != null then ???
-          else if rawIdWord != null && textWord != null then ???
-          else ???
-          end if
-        end if
         Seq(
-          visitRawNumberBlock(ctx.rawNumberBlock()),
-          visitRawNumberWord(ctx.rawNumberWord()),
-          visitTextBlock(ctx.textBlock()),
-          visitTextWord(ctx.textWord()),
-          visitRawIdBlock(ctx.rawIdBlock()),
-          visitRawIdWord(ctx.rawIdWord()),
-          visitDecimal(ctx.decimal()),
-          visitInteger(ctx.integer()),
-          visitPlainId(ctx.plainId()),
+          rawNumberBlock,
+          rawNumberWord,
+          textBlock,
+          textWord,
+          if rawIdTail.isDefined
+          then
+            val rawIdHead = rawIdBlock orElse rawIdWord
+            rawIdTail.map {
+              _ match
+                case RawNumber(_, value) => RawNumber(rawIdHead, value)
+                case Text(value)         => ComplexText(rawIdHead, value)
+            }
+          else None,
+          rawIdBlock,
+          rawIdWord,
+          decimal,
+          integer,
+          plainId,
         )
           .reduce { _ orElse _ }
+      case null => None
+    end match
   end visitExprHead
+
+  override def visitRawIdTail(
+      ctx: RawIdTailContext | Null,
+  ): Option[Ast.RawNumber | Ast.Text] =
+    ctx match
+      case null                  => None
+      case ctx: RawIdTailContext =>
+        val rawNumberBlock =
+          Option.fromNullable(ctx.rawNumberBlock()).flatMap(visitRawNumberBlock)
+        val rawNumberWord =
+          Option.fromNullable(ctx.rawNumberWord()).flatMap(visitRawNumberWord)
+        val textBlock =
+          Option.fromNullable(ctx.textBlock()).flatMap(visitTextBlock)
+        val textWord =
+          Option.fromNullable(ctx.textWord()).flatMap(visitTextWord)
+
+        Seq(
+          rawNumberBlock,
+          rawNumberWord,
+          textBlock,
+          textWord,
+        )
+          .reduce { _ orElse _ }
+  end visitRawIdTail
 
   override def visitRawNumberBlock(
       ctx: RawNumberBlockContext | Null,

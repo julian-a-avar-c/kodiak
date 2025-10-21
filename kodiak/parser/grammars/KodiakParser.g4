@@ -6,7 +6,8 @@ options {
 
 // Program Structure
 program: stmts? EOF;
-stmts: expr;
+stmts: expr (stmtSep+ expr)*;
+stmtSep: SEMI;
 
 expr:
     exprHead;
@@ -16,19 +17,13 @@ exprHead:
     | rawNumberWord
     | textBlock
     | textWord
-    | rawIdBlock rawNumberBlock
-    | rawIdBlock rawNumberWord
-    | rawIdBlock textBlock
-    | rawIdBlock textWord
-    | rawIdBlock
-    | rawIdWord rawNumberBlock
-    | rawIdWord rawNumberWord
-    | rawIdWord textBlock
-    | rawIdWord textWord
-    | rawIdWord
+    | rawIdBlock rawIdTail?
+    | rawIdWord rawIdTail?
     | decimal
     | integer
     | plainId;
+
+rawIdTail: rawNumberBlock | rawNumberWord | textBlock | textWord;
 
 rawNumberWord: HASH rawWord+ (DOT rawWord+)*;
 rawNumberBlock: HASH rawBlock;

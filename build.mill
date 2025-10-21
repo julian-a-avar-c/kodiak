@@ -1,4 +1,4 @@
-//| mill-version: 1.0.5-native
+//| mill-version: 1.0.6-native
 package build
 
 import mill.*
