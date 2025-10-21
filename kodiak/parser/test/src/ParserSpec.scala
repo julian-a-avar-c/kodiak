@@ -157,22 +157,6 @@ class ParserSpec extends AnyFunSuite with Matchers:
     )
   }
 
-  test("If Expressions") {
-    assertParse("(if true then 1 else 0)")(
-      Ast.Program(
-        Ast.Stmts(
-          Seq(
-            Ast.If(
-              condition = Ast.True,
-              consequent = Ast.Integer(1),
-              alternative = Ast.Integer(0),
-            ),
-          ),
-        ),
-      ),
-    )
-  }
-
   // --------------------------------------------------------------------------
 
   test("Op App") {

@@ -3,9 +3,6 @@ package kodiak.parser
 import kodiak.antlr.KodiakParserBaseVisitor
 import kodiak.antlr.KodiakParser.*
 import scala.util.boundary, boundary.break
-import kodiak.parser.Ast.RawNumber
-import kodiak.parser.Ast.Text
-import kodiak.parser.Ast.ComplexText
 
 class KodiakParserVisitor
     extends kodiak.antlr.KodiakParserBaseVisitor[Option[Ast | Null]]:
@@ -23,7 +20,9 @@ class KodiakParserVisitor
       case null              => None
       case ctx: StmtsContext =>
         import scala.jdk.CollectionConverters.*
-        val exprs = ctx.expr().asScala.toSeq.collect(visitExpr(_).get)
+        val exprs = ctx.expr().asScala.toSeq.map(visitExpr(_)).collect {
+          case Some(value) => value
+        }
         Some(Ast.Stmts(exprs))
   end visitStmts
 
@@ -36,7 +35,6 @@ class KodiakParserVisitor
           case ctx: OpAppContext     => visitOpApp(ctx)
           case ctx: ExprHeadContext  => visitExprHead(ctx)
         }
-
   end visitExpr
 
   override def visitGroupExpr(
@@ -106,8 +104,8 @@ class KodiakParserVisitor
             .map {
               val idHead = rawIdBlock orElse rawIdWord orElse plainId
               _ match
-                case RawNumber(_, value) => RawNumber(idHead, value)
-                case Text(value)         => ComplexText(idHead, value)
+                case Ast.RawNumber(_, value) => Ast.RawNumber(idHead, value)
+                case Ast.Text(value)         => Ast.ComplexText(idHead, value)
             }
 
         Seq(
@@ -157,13 +155,17 @@ class KodiakParserVisitor
 
   // --------------------------------------------------------------------------
 
-  override def visitCtl(ctx: (CtlContext) | Null): (Option[Ast.If]) =
+  override def visitCtl(
+      ctx: (CtlContext) | Null,
+  ): (Option[Ast.If | Ast.Match]) =
     ctx match
       case null => None
       case ctx  =>
-        val `if` = Option.fromNullable(ctx.if_()).flatMap(visitIf_)
+        val `if`    = Option.fromNullable(ctx.if_()).flatMap(visitIf_)
+        val `match` = Option.fromNullable(ctx.`match`()).flatMap(visitMatch)
         Seq(
           `if`,
+          `match`,
         ).find(_.isDefined).flatten
   end visitCtl
 
@@ -177,6 +179,67 @@ class KodiakParserVisitor
           alternative <- Option.fromNullable(ctx.expr(2)).flatMap(visitExpr)
         yield Ast.If(condition, consequent, alternative)
   end visitIf_
+
+  override def visitMatch(ctx: (MatchContext) | Null): (Option[Ast.Match]) =
+    ctx match
+      case null => None
+      case ctx  =>
+        for
+          scrutinee <- Option.fromNullable(ctx.expr()).flatMap(visitExpr)
+          pattern   <-
+            Option.fromNullable(ctx.matchPattern()).flatMap(visitMatchPattern)
+        yield Ast.Match(scrutinee, Seq(pattern))
+  end visitMatch
+
+  override def visitMatchPattern(
+      ctx: MatchPatternContext | Null,
+  ): Option[Ast.MatchPattern] =
+    ctx match
+      case null => None
+      case ctx  =>
+        for
+          guard <-
+            Option.fromNullable(ctx.matchGuard()).flatMap(visitMatchGuard)
+          body  <- Option.fromNullable(ctx.expr()).flatMap(visitExpr)
+        yield Ast.MatchPattern(guard, body)
+  end visitMatchPattern
+
+  override def visitMatchGuard(
+      ctx: MatchGuardContext | Null,
+  ): Option[Ast.MatchGuard] =
+    ctx match
+      case null => None
+      case ctx  =>
+        val matchElseGuard             =
+          Option.fromNullable(ctx.matchElseGuard()).flatMap(visitMatchElseGuard)
+        val matchUntypedSimplExprGuard =
+          Option
+            .fromNullable(ctx.matchUntypedSimplExprGuard())
+            .flatMap(visitMatchUntypedSimplExprGuard)
+        Seq(matchElseGuard, matchUntypedSimplExprGuard)
+          .find(_.isDefined)
+          .flatten
+  end visitMatchGuard
+
+  override def visitMatchElseGuard(
+      ctx: MatchElseGuardContext | Null,
+  ): Option[Ast.MatchGuard.Else.type] =
+    ctx match
+      case null => None
+      case ctx  => Some(Ast.MatchGuard.Else)
+  end visitMatchElseGuard
+
+  override def visitMatchUntypedSimplExprGuard(
+      ctx: MatchUntypedSimplExprGuardContext | Null,
+  ): Option[Ast.MatchGuard.UntypedSimpleExpr] =
+    ctx match
+      case null => None
+      case ctx  =>
+        Option
+          .fromNullable(ctx.expr())
+          .flatMap(visitExpr)
+          .map(expr => Ast.MatchGuard.UntypedSimpleExpr(expr))
+  end visitMatchUntypedSimplExprGuard
 
   // --------------------------------------------------------------------------
 

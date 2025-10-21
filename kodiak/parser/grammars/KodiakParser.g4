@@ -31,8 +31,13 @@ idTail: textBlock | textWord | rawNumberBlock | rawNumberWord;
 
 // ----------------------------------------------------------------------------
 
-ctl: if_;
+ctl: if_ | match;
 if_: IF sl expr sl THEN sl expr sl ELSE sl expr;
+match: MATCH sl expr sl matchPattern;
+matchPattern: matchGuard sl expr;
+matchGuard: matchElseGuard | matchUntypedSimplExprGuard;
+matchElseGuard: ELSE;
+matchUntypedSimplExprGuard: WITH sl expr sl THEN;
 
 // ----------------------------------------------------------------------------
 
@@ -51,7 +56,8 @@ integer: DASH? DIGIT+;
 
 anyId: rawIdBlock | rawIdWord | plainId;
 plainId: WORD rawWord*;
-rawIdWord: BACK_QUOTE (IF | rawWord+); // TODO: Add more keywords
+rawIdWord:
+	BACK_QUOTE (IF | TRUE | FALSE | rawWord+); // TODO: Add more keywords
 rawIdBlock: BACK_QUOTE rawBlock;
 
 // ----------------------------------------------------------------------------
